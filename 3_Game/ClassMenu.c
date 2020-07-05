@@ -31,6 +31,8 @@ class ClassMenu extends UIScriptedMenu {
 				case "Assault":
 					TStringArray weapons = {"M4A1"};
 					classData.SetPrimaryWeapons(weapons);
+					TStringArray utilities = {"LandMineTrap"};
+					classData.SetUtilities(utilities);
 					break;
 				case "Support":
 

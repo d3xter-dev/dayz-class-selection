@@ -1,14 +1,21 @@
 class ClassData extends UIScriptedMenu {
 	
 	protected string ClassName = "CLASSNAME";
-	protected array<EntityAI> PrimaryWeapons;
-	protected array<EntityAI> SecondaryWeapons;
-	protected array<EntityAI> Utilities;
-	protected array<EntityAI> Clothes;
+	protected ref array<EntityAI> PrimaryWeapons;
+	protected ref array<EntityAI> SecondaryWeapons;
+	protected ref array<EntityAI> Utilities;
+	protected ref array<EntityAI> Clothes;
 
 	protected EntityAI CurrentPrimary;
 	protected EntityAI CurrentSecondary;
 	protected EntityAI CurrentUtility;
+	
+	void ClassData() {
+		PrimaryWeapons = new array<EntityAI>;
+		SecondaryWeapons = new array<EntityAI>;
+		Utilities = new array<EntityAI>;
+		Clothes = new array<EntityAI>;
+	}
 	
 	void SetClassName(string className) {
 		ClassName = className;
@@ -20,12 +27,10 @@ class ClassData extends UIScriptedMenu {
 	}
 	
 	void SetPrimaryWeapons(TStringArray weapons) {
-		PrimaryWeapons.Clear();
+		
 		foreach(string weapon: weapons) {
-			//Object apple = GetGame().CreateObject( "FruitApple", String2Vector("0 10 0"), false );
-			//Print( apple.GetID() );
-			EntityAI entity = EntityAI.Cast(null);
-			entity.GetLODByName(weapon);
+			Object weaponObj = GetGame().CreateObject(weapon, Vector(0, 0, 0), true);
+			EntityAI entity = EntityAI.Cast(Entity.Cast(weaponObj));
 			PrimaryWeapons.Insert(entity);
 		}
 	}
@@ -33,8 +38,8 @@ class ClassData extends UIScriptedMenu {
 	void SetSecondaryWeapons(TStringArray weapons) {
 		SecondaryWeapons.Clear();
 		foreach(string weapon: weapons) {
-			EntityAI entity = EntityAI.Cast(null);
-			entity.GetLODByName(weapon);
+			Object weaponObj = GetGame().CreateObject(weapon, Vector(0, 0, 0), true);
+			EntityAI entity = EntityAI.Cast(Entity.Cast(weaponObj));
 			SecondaryWeapons.Insert(entity);
 		}
 	}
@@ -42,8 +47,8 @@ class ClassData extends UIScriptedMenu {
 	void SetUtilities(TStringArray utilities) {
 		Utilities.Clear();
 		foreach(string utility: utilities) {
-			EntityAI entity = EntityAI.Cast(null);
-			entity.GetLODByName(utility);
+			Object utilityObj = GetGame().CreateObject(utility, Vector(0, 0, 0), true);
+			EntityAI entity = EntityAI.Cast(Entity.Cast(utilityObj));
 			Utilities.Insert(entity);
 		}
 	}
@@ -51,8 +56,8 @@ class ClassData extends UIScriptedMenu {
 	void SetClothes(TStringArray clothes) {
 		Clothes.Clear();
 		foreach(string clothing: clothes) {
-			EntityAI entity = EntityAI.Cast(null);
-			entity.GetLODByName(clothing);
+			Object clothingObj = GetGame().CreateObject(clothing, Vector(0, 0, 0), true);
+			EntityAI entity = EntityAI.Cast(Entity.Cast(clothingObj));
 			Clothes.Insert(entity);
 		}
 	}
