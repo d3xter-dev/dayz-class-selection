@@ -1,0 +1,48 @@
+FrameWidgetClass rootFrame {
+ visible 0
+ clipchildren 1
+ inheritalpha 0
+ size 1205.56995 753.47406
+ halign center_ref
+ valign center_ref
+ hexactpos 0
+ vexactpos 0
+ hexactsize 1
+ vexactsize 1
+ scriptclass "ClassMenu"
+ {
+  PanelWidgetClass BackgroundPanel {
+   clipchildren 1
+   inheritalpha 1
+   ignorepointer 1
+   color 0 0 0 0.7451
+   size 1 1
+   halign center_ref
+   valign center_ref
+   hexactpos 0
+   vexactpos 0
+   hexactsize 0
+   vexactsize 0
+   scaled 1
+   style rover_sim_colorable
+   {
+    ButtonWidgetClass SelectButton {
+     position 0 45
+     size 540.323 48
+     halign center_ref
+     valign bottom_ref
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     style MenuDefault
+     text "CONFIRM CLASS"
+    }
+   }
+  }
+ }
+ {
+  ScriptParamsClass {
+  }
+ }
+}
