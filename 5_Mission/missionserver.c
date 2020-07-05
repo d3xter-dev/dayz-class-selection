@@ -1,19 +1,35 @@
 modded class MissionServer
 {
+	private string cfgPath = "$saves:";
+	const private string cfgPathServer = "$profile:";
 
-	void MissionServer()
-	{
-		GetGame().GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(this.UpdatePlayersStats, 30000, true);
+	override void OnInit() {
+		super.OnInit();
+		
+		if(GetGame().IsServer()){
+			cfgPath = cfgPathServer;
+			
+			if (!FileExist(cfgPath + "ClassSelection\\")) MakeDirectory(cfgPath + "\\ClassSelection\\");
+			
+			ref JsonClassData newClassData = new JsonClassData();
+			
+			newClassData.className = "Assault";
+			newClassData.primaryWeapons = {
+				 new JsonClassWeapon("M4A1", {"M4_RISHndgrd_Black", "M4_MPBttstck_Black", "ACOGOptic"}, {new JsonClassMagazine("Mag_STANAG_30Rnd", 5)})
+			};
+			newClassData.secondaryWeapons = {
+				 new JsonClassWeapon("MakarovIJ70", {"MakarovPBSuppressor"}, {new JsonClassMagazine("MAG_IJ70_8RND", 5)})
+			};
+			newClassData.utilities = {
+				 new JsonClassWeapon("LandMineTrap")
+			};
+			newClassData.clothes = {
+				 new JsonClassClothing("M65Jacket_Black", "GorkaPants_PautRev", "MilitaryBoots_Redpunk", "TortillaBag", "PlateCarrierComplete")
+			};
 	
-		int debugMonitorEnable = GetGame().ServerConfigGetInt("enableDebugMonitor");
-		GetGame().SetDebugMonitorEnabled(debugMonitorEnable);
+			JsonFileLoader<JsonClassData>.JsonSaveFile(cfgPath + "ClassSelection\\ClassDataExample.json", newClassData);
+		}
 		
-		m_DeadPlayersArray = new array<ref CorpseData>;
-		UpdatePlayersStats();
-		m_Players = new array<Man>;
-		m_LogoutPlayers = new map<PlayerBase, ref LogoutInfo>;
-		
-		InitEquipArrays();
 	}
 	
 	override void OnUpdate(float timeslice)
