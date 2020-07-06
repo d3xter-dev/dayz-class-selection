@@ -1,8 +1,14 @@
 modded class MissionGameplay {
 	
 	ref ClassMenu m_ClassMenu;
+	ref array<ref JsonClassData> m_AvailableClasses;
 	
-	override void OnKeyPress( int key ) {
+	void MissionGameplay()
+	{
+		GetRPCManager().AddRPC("ClassSelection", "SyncAvailableClasses", this, SingeplayerExecutionType.Client);
+	}
+	
+	override void OnKeyPress( int key ) { 
 		super.OnKeyPress( key );
 		
 		UIManager UIMgr = GetGame().GetUIManager();
@@ -25,9 +31,23 @@ modded class MissionGameplay {
 	}
 	
 	
+	void SyncAvailableClasses(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
+	{
+	    Param1<array<ref JsonClassData>> classes;
+	    if ( !ctx.Read( classes ) ) return;
+		
+	    if( type == CallType.Client )
+	    {
+	        Print( "Client function called!" );
+	        m_AvailableClasses = classes.param1;
+				Print( classes.param1.Count());
+				Print(m_AvailableClasses.Count());
+	    }
+	}
+	
 	private ref ClassMenu GetClassMenu() {
 		if ( !m_ClassMenu ) {
-			m_ClassMenu = new ref ClassMenu;
+			m_ClassMenu = new ref ClassMenu(m_AvailableClasses);
 			m_ClassMenu.Init();
 		}
 

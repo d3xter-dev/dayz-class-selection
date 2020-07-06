@@ -26,28 +26,28 @@ class ClassData extends UIScriptedMenu {
 		}
 	}
 	
-	void SetPrimaryWeapons(array<ClassWeapon> weapons) {
+	void SetPrimaryWeapons(array<ref ClassWeapon> weapons) {
 		PrimaryWeapons.Clear();
 		foreach(ClassWeapon weapon: weapons) {
 			PrimaryWeapons.Insert(weapon);
 		}
 	}
 	
-	void SetSecondaryWeapons(array<ClassWeapon> weapons) {
+	void SetSecondaryWeapons(array<ref ClassWeapon> weapons) {
 		SecondaryWeapons.Clear();
 		foreach(ClassWeapon weapon: weapons) {
 			SecondaryWeapons.Insert(weapon);
 		}
 	}
 	
-	void SetUtilities(array<ClassWeapon> weapons) {
+	void SetUtilities(array<ref ClassWeapon> weapons) {
 		Utilities.Clear();
 		foreach(ClassWeapon weapon: weapons) {
 			Utilities.Insert(weapon);
 		}
 	}
 		
-	void SetClothes(array<ClassClothing> clothes) {
+	void SetClothes(array<ref ClassClothing> clothes) {
 		Clothes.Clear();
 		foreach(ClassClothing clothing: clothes) {
 			Clothes.Insert(clothing);
@@ -80,5 +80,37 @@ class ClassData extends UIScriptedMenu {
 		if(CurrentPrimary) primaryPreview.SetItem(CurrentPrimary.GetWeapon());
 		if(CurrentUtility) secondaryPreview.SetItem(CurrentSecondary.GetWeapon());
 		if(CurrentSecondary) utilityPreview.SetItem(CurrentUtility.GetWeapon());
+	}
+	
+	void LoadFromJSON(JsonClassData data) {
+		SetClassName(data.className);
+		
+		array<ref ClassWeapon> primaryWeapons = new array<ref ClassWeapon>();
+		foreach(JsonClassWeapon jsonWp: data.primaryWeapons) {
+			ClassWeapon newWeapon = ClassWeapon.LoadFromJSON(jsonWp);
+			primaryWeapons.Insert(newWeapon);
+		}
+		
+		array<ref ClassWeapon> secondaryWeapons = new array<ref ClassWeapon>;
+		foreach(JsonClassWeapon jsonWs: data.secondaryWeapons) {
+			secondaryWeapons.Insert(ClassWeapon.LoadFromJSON(jsonWs));
+		}
+		
+		array<ref ClassWeapon> utilities = new array<ref ClassWeapon>;
+		foreach(JsonClassWeapon jsonU: data.utilities) {
+			utilities.Insert(ClassWeapon.LoadFromJSON(jsonU));
+		}
+		
+		array<ref ClassClothing> clothings = new array<ref ClassClothing>;
+		foreach(JsonClassClothing jsonC: data.clothes) {
+			clothings.Insert(new ClassClothing(jsonC.top, jsonC.pants, jsonC.shoes, jsonC.backpack, jsonC.vest));
+		}
+		
+		SetPrimaryWeapons(primaryWeapons);
+		SetSecondaryWeapons(secondaryWeapons);
+		SetUtilities(utilities);
+		SetClothes(clothings);
+		
+		Refresh();
 	}
 }

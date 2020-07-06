@@ -43,4 +43,15 @@ class ClassWeapon {
 	TStringArray GetMagazines() {
 		return m_Magazines;
 	}
+	
+	static ClassWeapon LoadFromJSON(JsonClassWeapon data) {
+		ClassWeapon weapon = new ClassWeapon(data.name);
+		weapon.SetAttachments(data.attachments);
+		
+		foreach(JsonClassMagazine mag: data.magazines) {
+			weapon.AddMagazines(mag.name, mag.quantity);
+		}
+		
+		return weapon;
+	}
 }

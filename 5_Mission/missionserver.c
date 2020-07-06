@@ -2,6 +2,8 @@ modded class MissionServer
 {
 	private string cfgPath = "$saves:";
 	const private string cfgPathServer = "$profile:";
+	
+	ref array<ref JsonClassData> m_AvailableClasses;
 
 	override void OnInit() {
 		super.OnInit();
@@ -11,6 +13,8 @@ modded class MissionServer
 			
 			if (!FileExist(cfgPath + "ClassSelection\\")) MakeDirectory(cfgPath + "\\ClassSelection\\");
 			
+			
+		    m_AvailableClasses = new array<ref JsonClassData>;
 			ref JsonClassData newClassData = new JsonClassData();
 			
 			newClassData.className = "Assault";
@@ -27,9 +31,42 @@ modded class MissionServer
 				 new JsonClassClothing("M65Jacket_Black", "GorkaPants_PautRev", "MilitaryBoots_Redpunk", "TortillaBag", "PlateCarrierComplete")
 			};
 	
+			m_AvailableClasses.Insert(newClassData);
+			Print(newClassData.className);
+			Print(m_AvailableClasses.Get(0).className);
+			
 			JsonFileLoader<JsonClassData>.JsonSaveFile(cfgPath + "ClassSelection\\ClassDataExample.json", newClassData);
 		}
+	}
+	
+	override void OnEvent(EventType eventTypeId, Param params) 
+	{
+		super.OnEvent(eventTypeId, params);
 		
+		PlayerIdentity identity;
+		PlayerBase player;
+		
+		switch(eventTypeId)
+		{
+			case ClientReadyEventTypeID:
+				ClientReadyEventParams readyParams;
+				Class.CastTo(readyParams, params);
+				
+				identity = readyParams.param1;
+				Class.CastTo(player, readyParams.param2);
+				if (!player)
+				{
+					Debug.Log("ClientReadyEvent: Player is empty");
+					return;
+				}
+			
+				Print(m_AvailableClasses);
+				Print(m_AvailableClasses.Get(0));
+				Print(m_AvailableClasses.Get(0).className);
+			
+				GetRPCManager().SendRPC("ClassSelection", "SyncAvailableClasses", new Param1<ref array<ref JsonClassData>>(m_AvailableClasses), true, identity);
+			break;
+		}
 	}
 	
 	override void OnUpdate(float timeslice)
@@ -82,14 +119,7 @@ modded class MissionServer
 		player.GetInventory().CreateInInventory("Mag_STANAG_30Rnd");
 		player.GetInventory().CreateInInventory("Mag_STANAG_30Rnd");
 		player.GetInventory().CreateInInventory("Mag_STANAG_30Rnd");
-		Magazine mag = player.GetInventory().CreateInInventory("Mag_STANAG_30Rnd");
-		//bool attached = gun.AttachMagazine(gun.GetCurrentMuzzle(),magazine);
-		//gun.CopyWeaponStateFrom(gun);
-		//gun.SyncSelectionState(true, true);
-		//gun.SyncEventToRemote(new WeaponEventAttachMagazine(player, magazine));
-		//player.GetWeaponManager().Update(0);
-		//EntityAI magazine = player.GetInventory().CreateInInventory("Mag_STANAG_30Rnd");
-		//player.GetDayZPlayerInventory().PostWeaponEvent( new WeaponEventAttachMagazine( player, Magazine.Cast(magazine) ) );
+		player.GetInventory().CreateInInventory("Mag_STANAG_30Rnd");
 	}
 
 	override void EquipCharacter()
