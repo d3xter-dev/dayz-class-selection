@@ -42,28 +42,64 @@ modded class MissionServer
 	}
 	
 	void SetPlayerClass(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {
-		Param1<JsonClassSelection> selectedClass;
-	    if ( !ctx.Read( selectedClass ) ) return;
+		Param1<JsonClassSelection> params;
+	    if ( !ctx.Read( params ) ) return;
 		
 	    if( type == CallType.Server )
 	    {
-	        Print( "Server function called!" );
-	        Print(selectedClass.param1.className);
-	        Print(selectedClass.param1.primary);
+			JsonClassSelection selectedClass = params.param1;
 			
+	        Print( "Server function called!" );
+
 			PlayerBase player = GetPlayerById(sender.GetPlayerId());
 			//player.RemoveAllItems();
-			Print(selectedClass.param1.primary);
-			Print(selectedClass.param1.primary.name);
+		
+			//Check if Class has Weapons and attachments available
+			ref JsonClassData foundClass;
+			ref ClassWeapon foundPrimary; 
 			
-			//Check if Class has Weapons and attachments available 
+			foreach(JsonClassData fuck_json: m_AvailableClasses) {
+				if(fuck_json.className == selectedClass.className) {
+					foundClass = fuck_json;
+					foreach(JsonClassWeapon fuck_weapon: fuck_json.primaryWeapons){
+						if(fuck_weapon.name == selectedClass.primary.name) {
+							foundPrimary = ClassWeapon.LoadFromJSON(fuck_weapon);
+							
+							bool validAttachments = true;
+							foreach(string attachment: selectedClass.primary.attachments) {
+								if(fuck_weapon.attachments.Find(attachment)) {
+									validAttachments = false;
+								}
+							}
+							
+							if(validAttachments) {
+								foundPrimary.SetAttachments(selectedClass.primary.attachments);
+							}
+						}
+					}
+				}
+			}
+			
+			TStringArray attachments;
+			TStringArray mags;
+			if(foundClass && foundPrimary) {
+				Weapon_Base primary = Weapon_Base.Cast(player.GetInventory().CreateInInventory(selectedClass.primary.name));
+				attachments =  foundPrimary.GetAttachments();
+				foreach(string toAddAttachment: attachments) {
+					primary.GetInventory().CreateAttachment(toAddAttachment);
+				}
+				
+				mags =  foundPrimary.GetMagazines();
+				foreach(string mag: mags) {
+					player.GetInventory().CreateInInventory(mag);
+				}
+			}
+			
 			// check if selectedClass.param1.className in m_AvailableClasses 
 			// loop through primary weapons of that class
 			// if found continue to loop through all attachments if they exists for that WeaponStateBase
 			// if not cancel and ban / kill / explode player.
-			// Then create in inventory
-			
-			player.GetInventory().CreateInInventory("M4A1");
+			// Then create in inventory	
 	    }
 	}
 	
