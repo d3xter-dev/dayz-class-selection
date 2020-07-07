@@ -1,20 +1,20 @@
 class ClassData extends UIScriptedMenu {
 	
 	protected string ClassName = "CLASSNAME";
-	protected ref array<ClassWeapon> PrimaryWeapons;
-	protected ref array<ClassWeapon> SecondaryWeapons;
-	protected ref array<ClassWeapon> Utilities;
-	protected ref array<ClassClothing> Clothes;
+	protected ref array<ref ClassWeapon> PrimaryWeapons;
+	protected ref array<ref ClassWeapon> SecondaryWeapons;
+	protected ref array<ref ClassWeapon> Utilities;
+	protected ref array<ref ClassClothing> Clothes;
 
 	protected ClassWeapon CurrentPrimary;
 	protected ClassWeapon CurrentSecondary;
 	protected ClassWeapon CurrentUtility;
 	
 	void ClassData() {
-		PrimaryWeapons = new array<ClassWeapon>;
-		SecondaryWeapons = new array<ClassWeapon>;
-		Utilities = new array<ClassWeapon>;
-		Clothes = new array<ClassClothing>;
+		PrimaryWeapons = new array<ref ClassWeapon>;
+		SecondaryWeapons = new array<ref ClassWeapon>;
+		Utilities = new array<ref ClassWeapon>;
+		Clothes = new array<ref ClassClothing>;
 	}
 	
 	void SetClassName(string className) {
@@ -112,5 +112,9 @@ class ClassData extends UIScriptedMenu {
 		SetClothes(clothings);
 		
 		Refresh();
+	}
+	
+	JsonClassSelection GetSelection() {
+		return new JsonClassSelection(ClassName, CurrentPrimary, CurrentSecondary, CurrentUtility);
 	}
 }

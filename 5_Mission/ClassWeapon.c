@@ -54,4 +54,8 @@ class ClassWeapon {
 		
 		return weapon;
 	}
+	
+	JsonClassWeapon ToJSON() {
+		return new JsonClassWeapon(GetWeapon().GetType(), GetAttachments());
+	}
 }

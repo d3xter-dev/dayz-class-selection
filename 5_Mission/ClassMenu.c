@@ -57,6 +57,12 @@ class ClassMenu extends UIScriptedMenu {
 		}
 		
 		m_currentClass = newClass;
+		
+		ClassData data;
+		m_currentClass.GetScript(data);
+		
+		GetRPCManager().SendRPC("ClassSelection", "SetPlayerClass", new Param1<ref JsonClassSelection>(data.GetSelection()));
+		
 		background.SetColor(COLOR_RED_A);
 	}
 }

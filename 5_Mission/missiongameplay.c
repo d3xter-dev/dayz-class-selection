@@ -40,8 +40,6 @@ modded class MissionGameplay {
 	    {
 	        Print( "Client function called!" );
 	        m_AvailableClasses = classes.param1;
-				Print( classes.param1.Count());
-				Print(m_AvailableClasses.Count());
 	    }
 	}
 	

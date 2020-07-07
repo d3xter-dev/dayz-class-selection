@@ -9,6 +9,8 @@ modded class MissionServer
 		super.OnInit();
 		
 		if(GetGame().IsServer()){
+			GetRPCManager().AddRPC("ClassSelection", "SetPlayerClass", this);
+			
 			cfgPath = cfgPathServer;
 			
 			if (!FileExist(cfgPath + "ClassSelection\\")) MakeDirectory(cfgPath + "\\ClassSelection\\");
@@ -39,6 +41,52 @@ modded class MissionServer
 		}
 	}
 	
+	void SetPlayerClass(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {
+		Param1<JsonClassSelection> selectedClass;
+	    if ( !ctx.Read( selectedClass ) ) return;
+		
+	    if( type == CallType.Server )
+	    {
+	        Print( "Server function called!" );
+	        Print(selectedClass.param1.className);
+	        Print(selectedClass.param1.primary);
+			
+			PlayerBase player = GetPlayerById(sender.GetPlayerId());
+			//player.RemoveAllItems();
+			Print(selectedClass.param1.primary);
+			Print(selectedClass.param1.primary.name);
+			
+			//Check if Class has Weapons and attachments available 
+			// check if selectedClass.param1.className in m_AvailableClasses 
+			// loop through primary weapons of that class
+			// if found continue to loop through all attachments if they exists for that WeaponStateBase
+			// if not cancel and ban / kill / explode player.
+			// Then create in inventory
+			
+			player.GetInventory().CreateInInventory("M4A1");
+	    }
+	}
+	
+	PlayerBase GetPlayerById (int plyId) {
+		array<Man> players = new array<Man>;
+		PlayerBase result = NULL;
+	
+		if (GetGame().IsMultiplayer()) {
+			GetGame().GetPlayers(players);
+	
+			for (int i = 0; i < players.Count(); i++) {
+				if (players.Get(i).GetIdentity().GetPlayerId() == plyId) {
+					result = PlayerBase.Cast(players.Get(i));
+				}
+			}
+		} else {
+			result = PlayerBase.Cast(GetGame().GetPlayer());
+		}
+	
+		return result;
+	}
+
+	
 	override void OnEvent(EventType eventTypeId, Param params) 
 	{
 		super.OnEvent(eventTypeId, params);
@@ -59,10 +107,6 @@ modded class MissionServer
 					Debug.Log("ClientReadyEvent: Player is empty");
 					return;
 				}
-			
-				Print(m_AvailableClasses);
-				Print(m_AvailableClasses.Get(0));
-				Print(m_AvailableClasses.Get(0).className);
 			
 				GetRPCManager().SendRPC("ClassSelection", "SyncAvailableClasses", new Param1<ref array<ref JsonClassData>>(m_AvailableClasses), true, identity);
 			break;
