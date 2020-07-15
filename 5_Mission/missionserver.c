@@ -32,10 +32,43 @@ modded class MissionServer
 			newClassData.clothes = {
 				 new JsonClassClothing("M65Jacket_Black", "GorkaPants_PautRev", "MilitaryBoots_Redpunk", "TortillaBag", "PlateCarrierComplete")
 			};
+			
+			ref JsonClassData newClassDat2a = new JsonClassData();
+			
+			newClassDat2a.className = "Assault";
+			newClassDat2a.primaryWeapons = {
+				 new JsonClassWeapon("Izh43Shotgun", {}, {new JsonClassMagazine("Ammo_12gaPellets", 5)})
+			};
+			newClassDat2a.secondaryWeapons = {
+				 new JsonClassWeapon("MakarovIJ70", {"MakarovPBSuppressor"}, {new JsonClassMagazine("MAG_IJ70_8RND", 5)})
+			};
+			newClassDat2a.utilities = {
+				 new JsonClassWeapon("LandMineTrap")
+			};
+			newClassDat2a.clothes = {
+				 new JsonClassClothing("M65Jacket_Black", "GorkaPants_PautRev", "MilitaryBoots_Redpunk", "TortillaBag", "PlateCarrierComplete")
+			};
 	
+			ref JsonClassData newClassDat3a = new JsonClassData();
+			
+			newClassDat3a.className = "Assault";
+			newClassDat3a.primaryWeapons = {
+				 new JsonClassWeapon("Mosin9130", {}, {new JsonClassMagazine("Ammo_762x54", 5)})
+			};
+			newClassDat3a.secondaryWeapons = {
+				 new JsonClassWeapon("MakarovIJ70", {"MakarovPBSuppressor"}, {new JsonClassMagazine("MAG_IJ70_8RND", 5)})
+			};
+			newClassDat3a.utilities = {
+				 new JsonClassWeapon("LandMineTrap")
+			};
+			newClassDat3a.clothes = {
+				 new JsonClassClothing("M65Jacket_Black", "GorkaPants_PautRev", "MilitaryBoots_Redpunk", "TortillaBag", "PlateCarrierComplete")
+			};
+	
+			
 			m_AvailableClasses.Insert(newClassData);
-			Print(newClassData.className);
-			Print(m_AvailableClasses.Get(0).className);
+			m_AvailableClasses.Insert(newClassDat2a);
+			m_AvailableClasses.Insert(newClassDat3a);
 			
 			JsonFileLoader<JsonClassData>.JsonSaveFile(cfgPath + "ClassSelection\\ClassDataExample.json", newClassData);
 		}
@@ -82,24 +115,75 @@ modded class MissionServer
 			
 			TStringArray attachments;
 			TStringArray mags;
+			
 			if(foundClass && foundPrimary) {
-				Weapon_Base primary = Weapon_Base.Cast(player.GetInventory().CreateInInventory(selectedClass.primary.name));
+				Weapon_Base primary = Weapon_Base.Cast(player.GetHumanInventory().CreateInHands(selectedClass.primary.name));
+				
+				mags =  foundPrimary.GetMagazines();
+				Magazine newMag;
+				foreach(string mag: mags) {
+					newMag = Magazine.Cast(player.GetInventory().CreateInInventory(mag));
+				}
+				
+				if(GetGame().IsMultiplayer())
+		        {
+		            GetGame().RemoteObjectDelete( primary );
+		            GetGame().RemoteObjectDelete( newMag );
+		        }			
+
+				int mi = primary.GetCurrentMuzzle();
+				bool has_mag = false;
+				bool has_bullet = false;
+				int animationIndex = 0;
+
+				//Attach Mag if possible
+				if(newMag && primary.CanAttachMagazine(mi, newMag)) {
+					primary.AttachMagazine(mi, newMag);
+					pushToChamberFromAttachedMagazine(primary, mi);
+					has_bullet = true;
+					has_mag = true;
+				}
+				else {
+					float ammo_damage;
+					string ammo_type;
+						
+					if(newMag && newMag.LocalAcquireCartridge(ammo_damage, ammo_type)){
+						if(primary.GetInternalMagazineMaxCartridgeCount(mi)) {
+							primary.PopCartridgeFromInternalMagazine(mi, ammo_damage, ammo_type);
+							
+							while(!primary.IsInternalMagazineFull(mi)) {
+								primary.PushCartridgeToInternalMagazine(mi, ammo_damage, ammo_type);
+							}
+						}
+						
+						for(int i = 0; i < primary.GetMuzzleCount(); i++) {
+							primary.PushCartridgeToChamber(i, ammo_damage, ammo_type);
+							has_bullet = true;
+						}
+						
+						if(primary.IsInherited(BoltActionRifle_InnerMagazine_Base)) {
+							animationIndex = 1;
+						}
+						
+						if (primary.IsInherited(BoltActionRifle_InnerMagazine_Base) || primary.IsInherited(DoubleBarrel_Base)) {
+							has_bullet = false;
+						}
+					}
+				}
+				
+				primary.UpdateAnimationState(has_bullet, has_mag, animationIndex);
+
+				if(GetGame().IsMultiplayer())
+		        {
+		            GetGame().RemoteObjectCreate( primary );
+		            GetGame().RemoteObjectCreate( newMag );
+		        }
+					
 				attachments =  foundPrimary.GetAttachments();
 				foreach(string toAddAttachment: attachments) {
 					primary.GetInventory().CreateAttachment(toAddAttachment);
-				}
-				
-				mags =  foundPrimary.GetMagazines();
-				foreach(string mag: mags) {
-					player.GetInventory().CreateInInventory(mag);
-				}
+				}	
 			}
-			
-			// check if selectedClass.param1.className in m_AvailableClasses 
-			// loop through primary weapons of that class
-			// if found continue to loop through all attachments if they exists for that WeaponStateBase
-			// if not cancel and ban / kill / explode player.
-			// Then create in inventory	
 	    }
 	}
 	
