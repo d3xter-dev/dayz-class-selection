@@ -3,6 +3,7 @@ class ClassWeapon {
 	protected EntityAI m_EntityWeapon = null;
 	protected ref TStringArray m_EntityAttachments;
 	protected ref TStringArray m_Magazines = {};
+	bool selected = false;
 	
 	void ClassWeapon(string ObjectName) {
 		Object weaponObj = GetGame().CreateObject(ObjectName, Vector(0, 0, 0), true);
@@ -46,10 +47,13 @@ class ClassWeapon {
 	
 	static ClassWeapon LoadFromJSON(JsonClassWeapon data) {
 		ClassWeapon weapon = new ClassWeapon(data.name);
-		weapon.SetAttachments(data.attachments);
+		if(data.attachments) weapon.SetAttachments(data.attachments);
+		weapon.selected = data.selected;
 		
-		foreach(JsonClassMagazine mag: data.magazines) {
-			weapon.AddMagazines(mag.name, mag.quantity);
+		if(data.magazines) {
+			foreach(JsonClassMagazine mag: data.magazines) {
+				weapon.AddMagazines(mag.name, mag.quantity);
+			}
 		}
 		
 		return weapon;

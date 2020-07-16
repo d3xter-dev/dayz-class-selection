@@ -37,12 +37,10 @@ FrameWidgetClass rootFrame {
      vexactsize 1
      style MenuDefault
      text "CONFIRM CLASS"
+     text_offset 0 1.5
+     text_proportion 0.5
     }
    }
-  }
- }
- {
-  ScriptParamsClass {
   }
  }
 }

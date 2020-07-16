@@ -1,5 +1,6 @@
 class JsonClassSelection {
 	string className;
+	bool selected = false;
 	ref JsonClassWeapon primary;
 	ref JsonClassWeapon secondary;
 	ref JsonClassWeapon utility;

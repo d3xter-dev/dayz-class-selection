@@ -2,6 +2,7 @@ typedef array<ref JsonClassMagazine> JsonClassMagazineArray;
 
 class JsonClassWeapon {
 	string name;
+	bool selected;
 	ref TStringArray attachments;
 	ref JsonClassMagazineArray magazines;
 	
