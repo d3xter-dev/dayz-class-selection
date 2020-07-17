@@ -2,9 +2,12 @@ class ClassMenu extends UIScriptedMenu {
 
 	private ref Widget m_currentClass;
 	private ref array<ref JsonClassData> m_AvailableClasses;
-	private ref array<ref Widget> m_Widgets;
 	
-	void ClassMenu(ref array<ref JsonClassData> classes){
+	void ClassMenu(){
+		m_AvailableClasses = new ref array<ref JsonClassData>;
+	}
+	
+	void SetAvailableClasses(ref array<ref JsonClassData> classes){
 		m_AvailableClasses = classes;
 	}
 	
@@ -14,14 +17,15 @@ class ClassMenu extends UIScriptedMenu {
 	}
 	
 	override void OnShow() {
-		super.OnShow();
-		GetGame().GetInput().ChangeGameFocus( 1 );
-		
-		float startX = 80;
-		float startY = 70;
-		ClassData classData = null;
-		
-		if(!m_Widgets.Count()) {
+		if(m_AvailableClasses && m_AvailableClasses.Count()) {
+			super.OnShow();
+			GetGame().GetInput().ChangeGameFocus( 1 );
+			
+			float startX = 80;
+			float startY = 100;
+			ClassData classData = null;
+			
+			
 			foreach(JsonClassData jsonClassData: m_AvailableClasses) {
 				ref Widget classFrame  = GetGame().GetWorkspace().CreateWidgets( "Test Mod\\Scripts\\5_Mission\\layouts\\class.layout", layoutRoot);
 				
@@ -31,7 +35,6 @@ class ClassMenu extends UIScriptedMenu {
 				
 				classData.layoutRoot = classFrame;
 				classData.LoadFromJSON(jsonClassData);
-				m_Widgets.Insert(classFrame);
 				
 				if(classData.selected) {
 					m_currentClass = classFrame;
@@ -39,21 +42,9 @@ class ClassMenu extends UIScriptedMenu {
 				
 				startX += 380;
 			}
-		} 
-		else {
-			foreach(Widget classWidget: m_Widgets) {
-				classWidget.GetScript(classData);
-				classWidget.Show(true);
-				classWidget.Enable(true);
-				layoutRoot.AddChild(classWidget);
-				
-				if(classData.selected) {
-					m_currentClass = classWidget;
-				}
-			}
+			
+			ChangeCurrentClass(m_currentClass);
 		}
-		
-		ChangeCurrentClass(m_currentClass);
 	}
 	
 	override void OnHide() {
@@ -101,7 +92,7 @@ class ClassMenu extends UIScriptedMenu {
 			break;
 		}
 		
-		return super.OnClick(w, x, y, button);;
+		return super.OnClick(w, x, y, button);
 	}
 	
 	
@@ -109,7 +100,8 @@ class ClassMenu extends UIScriptedMenu {
 		if(m_currentClass) {
 			ClassData data;
 			m_currentClass.GetScript(data);
-			GetRPCManager().SendRPC("ClassSelection", "SetPlayerClass", new Param1<ref JsonClassSelection>(data.GetSelection()));
+			GetRPCManager().SendRPC("ClassSelection", "SetPlayerClass", new Param1<ref JsonClassSelection>(data.GetSelection()));	
+			Toggle();
 		}
 	}
 	
@@ -144,22 +136,22 @@ class ClassMenu extends UIScriptedMenu {
 		}
 	}
 	
-	ref array<ref Widget> Toggle(ref array<ref Widget> widgets) {
-		UIManager UIMgr = GetGame().GetUIManager();
-		
-		if (!GetLayoutRoot().IsVisible()){
-			m_Widgets = widgets;
-		 	UIMgr.HideDialog(); 
-			UIMgr.CloseAll();
-			UIMgr.ShowScriptedMenu(this , NULL );
+	void Toggle() {
+		if(!m_AvailableClasses || !m_AvailableClasses.Count()) {
+			GetRPCManager().SendRPC("ClassSelection", "RequestSyncAvailableClasses", null, true);
 		}
-		else {
-			widgets = m_Widgets;
+		
+		UIManager UIMgr = GetGame().GetUIManager();
+		if(UIMgr) {
 			UIMgr.HideDialog(); 
 			UIMgr.CloseAll();
-			UIMgr.HideScriptedMenu(this);
-		}
 		
-		return widgets;
+			if (!GetLayoutRoot().IsVisible() && m_AvailableClasses && m_AvailableClasses.Count()){
+				UIMgr.ShowScriptedMenu(this , NULL );
+			}
+			else {
+				UIMgr.HideScriptedMenu(this);
+			}
+		}
 	}
 }

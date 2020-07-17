@@ -2,6 +2,8 @@ modded class MissionServer
 {
 	private string cfgPath = "$saves:";
 	const private string cfgPathServer = "$profile:";
+	const private string cfgClasses = "ClassSelection\\Classes\\";
+	const private string cfgPlayerSaves = "ClassSelection\\PlayerSaves\\";
 	
 	ref array<ref JsonClassData> m_AvailableClasses;
 	ref map<string, ref array<ref JsonClassSelection>> m_PlayerClasses;
@@ -17,7 +19,8 @@ modded class MissionServer
 			
 			cfgPath = cfgPathServer;
 			
-			if (!FileExist(cfgPath + "ClassSelection\\")) MakeDirectory(cfgPath + "\\ClassSelection\\");
+			if (!FileExist(cfgPath + cfgClasses)) MakeDirectory(cfgPath + cfgClasses);
+			if (!FileExist(cfgPath + cfgPlayerSaves)) MakeDirectory(cfgPath + cfgPlayerSaves);
 			
 			
 		    m_AvailableClasses = new array<ref JsonClassData>;
@@ -39,7 +42,25 @@ modded class MissionServer
 				 new JsonClassClothing("M65Jacket_Black", "GorkaPants_PautRev", "MilitaryBoots_Redpunk", "TortillaBag", "PlateCarrierComplete")
 			};
 			
+			ref JsonClassData newClassDat2a = new JsonClassData();
+			newClassDat2a.className = "Support";
+			newClassDat2a.primaryWeapons = {
+				 new JsonClassWeapon("M4A1", {"M4_RISHndgrd_Black", "M4_MPBttstck_Black", "ACOGOptic"}, {new JsonClassMagazine("Mag_STANAG_30Rnd", 5)}),
+				 new JsonClassWeapon("Mosin9130", {}, {new JsonClassMagazine("Ammo_762x54", 5)}),
+				 new JsonClassWeapon("Izh43Shotgun", {}, {new JsonClassMagazine("Ammo_12gaPellets", 5)})
+			};
+			newClassDat2a.secondaryWeapons = {
+				 new JsonClassWeapon("MakarovIJ70", {"MakarovPBSuppressor"}, {new JsonClassMagazine("MAG_IJ70_8RND", 5)})
+			};
+			newClassDat2a.utilities = {
+				 new JsonClassWeapon("LandMineTrap")
+			};
+			newClassDat2a.clothes = {
+				 new JsonClassClothing("M65Jacket_Black", "GorkaPants_PautRev", "MilitaryBoots_Redpunk", "TortillaBag", "PlateCarrierComplete")
+			};
+			
 			m_AvailableClasses.Insert(newClassData);
+			m_AvailableClasses.Insert(newClassDat2a);
 			
 			JsonFileLoader<JsonClassData>.JsonSaveFile(cfgPath + "ClassSelection\\ClassDataExample.json", newClassData);
 		}
@@ -113,7 +134,7 @@ modded class MissionServer
 			}
 			
 			if(m_PlayerClasses.Contains(sender.GetId())) {
-				ref array<ref JsonClassSelection> playerClasses  = m_PlayerClasses.Get(sender.GetId());
+				ref array<ref JsonClassSelection> playerClasses = m_PlayerClasses.Get(sender.GetId());
 				
 				bool exsits = false;
 				
@@ -129,74 +150,14 @@ modded class MissionServer
 				
 				m_PlayerClasses.Set(sender.GetId(), playerClasses);
 			}
-		
-			//Check if Class has Weapons and attachments available
-			ref JsonClassData foundClass;
-			ref ClassWeapon foundPrimary; 
-			ref ClassWeapon foundSecondary; 
-			ref ClassWeapon foundUtility; 
 			
-			foreach(JsonClassData baseClass: m_AvailableClasses) {
-				if(baseClass.className == selectedClass.className) {
-					foundClass = baseClass;
-					
-					bool validAttachments;
-					
-					//Check Primary
-					foreach(JsonClassWeapon basePrimaryWeapon: baseClass.primaryWeapons){
-						if(basePrimaryWeapon.name == selectedClass.primary.name) {
-							foundPrimary = ClassWeapon.LoadFromJSON(basePrimaryWeapon);
-							
-							if(selectedClass.primary.attachments) {
-								validAttachments = true;
-								foreach(string primary_attachment: selectedClass.primary.attachments) {
-									if(basePrimaryWeapon.attachments.Find(primary_attachment)) {
-										validAttachments = false;
-									}
-								}
-								
-								if(validAttachments) {
-									foundPrimary.SetAttachments(selectedClass.primary.attachments);
-								}
-							}
-						}
-					}
-					
-					//Check Secondary
-					foreach(JsonClassWeapon baseSecondaryWeapon: baseClass.secondaryWeapons){
-						if(baseSecondaryWeapon.name == selectedClass.secondary.name) {
-							foundSecondary = ClassWeapon.LoadFromJSON(baseSecondaryWeapon);
-							
-							if(selectedClass.secondary.attachments) {
-								validAttachments = true;
-								foreach(string secondary_attachment: selectedClass.secondary.attachments) {
-									if(baseSecondaryWeapon.attachments.Find(secondary_attachment)) {
-										validAttachments = false;
-									}
-								}
-								
-								if(validAttachments) {
-									foundSecondary.SetAttachments(selectedClass.secondary.attachments);
-								}
-							}
-						}
-					}
-					
-					//Check Utility
-					foreach(JsonClassWeapon baseUtility: baseClass.utilities){
-						if(baseUtility.name == selectedClass.utility.name) {
-							foundUtility = ClassWeapon.LoadFromJSON(baseUtility);
-						}
-					}
-				}
-			}
+			SendSyncAvailableClasses(sender);
 			
-			if(foundClass && foundPrimary) {
-				SetClothes(foundClass.clothes.GetRandomElement(), player);
-				SpawnFullWepaon(foundPrimary, player, true);
-				SpawnFullWepaon(foundSecondary, player);
-				SpawnFullWepaon(foundUtility, player);
-			}
+			//Save Classes
+			JsonFileLoader<array<ref JsonClassSelection>>.JsonSaveFile(cfgPath + cfgPlayerSaves + sender.GetId() + ".json", m_PlayerClasses.Get(sender.GetId()));
+			
+			//Force Respawn
+			player.SetHealth(0);
 	    }
 	}
 	
@@ -232,7 +193,7 @@ modded class MissionServer
 		player.GetInventory().CreateInInventory(classData.vest);
 	}
 	
-	void SpawnFullWepaon(ClassWeapon weapon, PlayerBase player, bool InHands = false) {
+	Weapon_Base SpawnFullWepaon(ClassWeapon weapon, PlayerBase player, bool InHands = false) {
 		TStringArray attachments;
 		TStringArray mags;
 		Weapon_Base weaponBase;
@@ -244,7 +205,6 @@ modded class MissionServer
 		else {
 			 weaponBase = Weapon_Base.Cast(player.GetInventory().CreateInInventory(weapon.GetWeapon().GetType()));
 		}
-		
 		
 		if(weaponBase) {
 			mags =  weapon.GetMagazines();
@@ -309,7 +269,11 @@ modded class MissionServer
 			foreach(string toAddAttachment: attachments) {
 				weaponBase.GetInventory().CreateAttachment(toAddAttachment);
 			}	
+			
+			return weaponBase;
 		}
+		
+		return null;
 	}
 
 	
@@ -319,9 +283,18 @@ modded class MissionServer
 		
 		PlayerIdentity identity;
 		PlayerBase player;
-		
+
 		switch(eventTypeId)
 		{
+			case ClientPrepareEventTypeID:
+				ClientPrepareEventParams clientPrepareParams;
+				Class.CastTo(clientPrepareParams, params);
+			
+				identity = clientPrepareParams.param1;
+				if(identity) {
+					LoadPlayerData(identity);
+				}
+			break;
 			case ClientReadyEventTypeID:
 				ClientReadyEventParams readyParams;
 				Class.CastTo(readyParams, params);
@@ -339,32 +312,98 @@ modded class MissionServer
 		}
 	}
 	
-	override void OnUpdate(float timeslice)
-	{
-		super.OnUpdate(timeslice);
-	}
-	
-	void SetRandomHealth(EntityAI itemEnt)
-	{
-		if ( itemEnt )
-		{
-			int rndHlt = Math.RandomInt(55,100);
-			itemEnt.SetHealth("","",rndHlt);
-		}
+	void LoadPlayerData(PlayerIdentity identity) {
+		ref array<ref JsonClassSelection> playerClasses = new array<ref JsonClassSelection>;
+	    JsonFileLoader<array<ref JsonClassSelection>>.JsonLoadFile(cfgPath + cfgPlayerSaves + identity.GetId() + ".json", playerClasses);
+		m_PlayerClasses.Set(identity.GetId(), playerClasses);
 	}
 
 	override void EquipCharacter()
 	{	
-		EntityAI itemTop;
-		EntityAI itemEnt;
-		float rand;
-
 		PlayerBase player = PlayerBase.Cast(m_player);
-		itemTop = player.FindAttachmentBySlotName("Body");
-
-		if ( itemTop )
+		ref array<ref JsonClassSelection> playerClasses = null;
+		
+		if(m_PlayerClasses.Contains(player.GetIdentity().GetId())) {
+			playerClasses  = m_PlayerClasses.Get(player.GetIdentity().GetId());
+		}
+		
+		if (playerClasses)
 		{
-			//TODO
+			ref JsonClassSelection selectedClass = null;
+			
+			foreach(ref JsonClassSelection playerClass: playerClasses) {
+				if(playerClass.selected) selectedClass = playerClass;
+			}
+			
+			if(!selectedClass) selectedClass = playerClasses.Get(0);
+			
+			//Check if Class has Weapons and attachments available
+			ref JsonClassData foundClass;
+			ref ClassWeapon foundPrimary; 
+			ref ClassWeapon foundSecondary; 
+			ref ClassWeapon foundUtility; 
+			
+			foreach(JsonClassData baseClass: m_AvailableClasses) {
+				if(baseClass.className == selectedClass.className) {
+					foundClass = baseClass;
+					
+					bool validAttachments;
+					
+					//Check Primary
+					foreach(JsonClassWeapon basePrimaryWeapon: baseClass.primaryWeapons){
+						if(basePrimaryWeapon.name == selectedClass.primary.name) {
+							foundPrimary = ClassWeapon.LoadFromJSON(basePrimaryWeapon);
+							
+							if(selectedClass.primary.attachments) {
+								validAttachments = true;
+								foreach(string primary_attachment: selectedClass.primary.attachments) {
+									if(basePrimaryWeapon.attachments.Find(primary_attachment)) {
+										validAttachments = false;
+									}
+								}
+								
+								if(validAttachments) {
+									foundPrimary.SetAttachments(selectedClass.primary.attachments);
+								}
+							}
+						}
+					}
+					
+					//Check Secondary
+					foreach(JsonClassWeapon baseSecondaryWeapon: baseClass.secondaryWeapons){
+						if(baseSecondaryWeapon.name == selectedClass.secondary.name) {
+							foundSecondary = ClassWeapon.LoadFromJSON(baseSecondaryWeapon);
+							
+							if(selectedClass.secondary.attachments) {
+								validAttachments = true;
+								foreach(string secondary_attachment: selectedClass.secondary.attachments) {
+									if(baseSecondaryWeapon.attachments.Find(secondary_attachment)) {
+										validAttachments = false;
+									}
+								}
+								
+								if(validAttachments) {
+									foundSecondary.SetAttachments(selectedClass.secondary.attachments);
+								}
+							}
+						}
+					}
+					
+					//Check Utility
+					foreach(JsonClassWeapon baseUtility: baseClass.utilities){
+						if(baseUtility.name == selectedClass.utility.name) {
+							foundUtility = ClassWeapon.LoadFromJSON(baseUtility);
+						}
+					}
+				}
+			}
+			
+			if(foundClass && foundPrimary) {
+				SetClothes(foundClass.clothes.GetRandomElement(), player);
+				player.SetQuickBarEntityShortcut(SpawnFullWepaon(foundPrimary, player, true), 0);
+				player.SetQuickBarEntityShortcut(SpawnFullWepaon(foundSecondary, player), 1);
+				player.SetQuickBarEntityShortcut(SpawnFullWepaon(foundUtility, player), 2);
+			}
 		}
 	}
 };
