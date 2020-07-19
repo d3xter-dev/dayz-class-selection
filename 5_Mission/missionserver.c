@@ -8,6 +8,8 @@ modded class MissionServer
 	ref array<ref JsonClassData> m_AvailableClasses;
 	ref map<string, ref array<ref JsonClassSelection>> m_PlayerClasses;
 	
+	
+	
 	override void OnInit() {
 		super.OnInit();
 		
@@ -21,49 +23,54 @@ modded class MissionServer
 			
 			if (!FileExist(cfgPath + cfgClasses)) MakeDirectory(cfgPath + cfgClasses);
 			if (!FileExist(cfgPath + cfgPlayerSaves)) MakeDirectory(cfgPath + cfgPlayerSaves);
+			if (!FileExist(cfgPath + "ClassSelection\\ClassDataExample.json")) SaveExampleJSON();
 			
+			//Load Existing Classes
+			 m_AvailableClasses = new array<ref JsonClassData>;
 			
-		    m_AvailableClasses = new array<ref JsonClassData>;
-			ref JsonClassData newClassData = new JsonClassData();
+			string CurrentClassFileName;
+			FileAttr CurrentClassFileAttr;
 			
-			newClassData.className = "Assault";
-			newClassData.primaryWeapons = {
-				 new JsonClassWeapon("M4A1", {"M4_RISHndgrd_Black", "M4_MPBttstck_Black", "ACOGOptic"}, {new JsonClassMagazine("Mag_STANAG_30Rnd", 5)}),
-				 new JsonClassWeapon("Mosin9130", {}, {new JsonClassMagazine("Ammo_762x54", 5)}),
-				 new JsonClassWeapon("Izh43Shotgun", {}, {new JsonClassMagazine("Ammo_12gaPellets", 5)})
-			};
-			newClassData.secondaryWeapons = {
-				 new JsonClassWeapon("MakarovIJ70", {"MakarovPBSuppressor"}, {new JsonClassMagazine("MAG_IJ70_8RND", 5)})
-			};
-			newClassData.utilities = {
-				 new JsonClassWeapon("LandMineTrap")
-			};
-			newClassData.clothes = {
-				 new JsonClassClothing("M65Jacket_Black", "GorkaPants_PautRev", "MilitaryBoots_Redpunk", "TortillaBag", "PlateCarrierComplete")
-			};
-			
-			ref JsonClassData newClassDat2a = new JsonClassData();
-			newClassDat2a.className = "Support";
-			newClassDat2a.primaryWeapons = {
-				 new JsonClassWeapon("M4A1", {"M4_RISHndgrd_Black", "M4_MPBttstck_Black", "ACOGOptic"}, {new JsonClassMagazine("Mag_STANAG_30Rnd", 5)}),
-				 new JsonClassWeapon("Mosin9130", {}, {new JsonClassMagazine("Ammo_762x54", 5)}),
-				 new JsonClassWeapon("Izh43Shotgun", {}, {new JsonClassMagazine("Ammo_12gaPellets", 5)})
-			};
-			newClassDat2a.secondaryWeapons = {
-				 new JsonClassWeapon("MakarovIJ70", {"MakarovPBSuppressor"}, {new JsonClassMagazine("MAG_IJ70_8RND", 5)})
-			};
-			newClassDat2a.utilities = {
-				 new JsonClassWeapon("LandMineTrap")
-			};
-			newClassDat2a.clothes = {
-				 new JsonClassClothing("M65Jacket_Black", "GorkaPants_PautRev", "MilitaryBoots_Redpunk", "TortillaBag", "PlateCarrierComplete")
-			};
-			
-			m_AvailableClasses.Insert(newClassData);
-			m_AvailableClasses.Insert(newClassDat2a);
-			
-			JsonFileLoader<JsonClassData>.JsonSaveFile(cfgPath + "ClassSelection\\ClassDataExample.json", newClassData);
+			FindFileHandle ClassFileHandle = FindFile(cfgPath + cfgClasses + "*.json", CurrentClassFileName, CurrentClassFileAttr, FindFileFlags.DIRECTORIES);
+			if(CurrentClassFileName) {
+				LoadClassJSON(CurrentClassFileName);
+				
+				while(FindNextFile(ClassFileHandle, CurrentClassFileName, CurrentClassFileAttr)) {
+					LoadClassJSON(CurrentClassFileName);
+				}
+			}
 		}
+	}
+	
+	void LoadClassJSON(string ClassName) {
+		ref JsonClassData loadedClass = new JsonClassData();
+	    JsonFileLoader<JsonClassData>.JsonLoadFile(cfgPath + cfgClasses + ClassName, loadedClass);
+		
+		if(loadedClass.className) {
+			m_AvailableClasses.Insert(loadedClass);
+		}
+	}
+	
+	void SaveExampleJSON() {
+		JsonClassData example = new JsonClassData();
+			
+		example.className = "Assault";
+		example.primaryWeapons = {
+			 new JsonClassWeapon("M4A1", {"M4_RISHndgrd_Black", "M4_MPBttstck_Black", "ACOGOptic"}, {new JsonClassMagazine("Mag_STANAG_30Rnd", 5)}),
+			 new JsonClassWeapon("Mosin9130", {}, {new JsonClassMagazine("Ammo_762x54", 5)}),
+			 new JsonClassWeapon("Izh43Shotgun", {}, {new JsonClassMagazine("Ammo_12gaPellets", 5)})
+		};
+		example.secondaryWeapons = {
+			 new JsonClassWeapon("MakarovIJ70", {"MakarovPBSuppressor"}, {new JsonClassMagazine("MAG_IJ70_8RND", 5)})
+		};
+		example.utilities = {
+			 new JsonClassWeapon("LandMineTrap")
+		};
+		example.clothes = {
+			 new JsonClassClothing("M65Jacket_Black", "GorkaPants_PautRev", "MilitaryBoots_Redpunk", "TortillaBag", "PlateCarrierComplete")
+		};
+		
+		JsonFileLoader<JsonClassData>.JsonSaveFile(cfgPath + "ClassSelection\\ClassDataExample.json", example);
 	}
 	
 	void RequestSyncAvailableClasses(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {

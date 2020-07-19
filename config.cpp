@@ -1,6 +1,6 @@
 class CfgPatches
 {
-	class testmod_scripts
+	class classslection_scripts
 	{
 		units[]={};
 		weapons[]={};
@@ -15,19 +15,19 @@ class CfgPatches
 
 class CfgMods
 {
-	class testmod
+	class classslection
 	{
 		
-		dir = "TestMod";
+		dir = "d3xters-class-selction";
 		picture = "";
 		action = "";
 		hideName = 1;
 		hidePicture = 1;
-		name = "Test Mod";
-		credits = "0";
-		author = "0";
-		authorID = "0"; 
-		version = ""; 
+		name = "DayZ Class-Selection Mod";
+		action = "https://github.com/d3xter-dev";
+		author = "D3XTER-dev";
+		authorID = "LemmingTV"; 
+		version = "0.1"; 
 		extra = 0;
 		type = "mod";
 		dependencies[] = {"Game", "World", "Mission"};
@@ -37,17 +37,17 @@ class CfgMods
 			class gameScriptModule
 			{
 				value = "";
-				files[] = {"Test Mod/Scripts/3_Game"};
+				files[] = {"d3xters-class-selction/Scripts/3_Game"};
 			};
 			class worldScriptModule
 			{
 				value = "";
-				files[] = {"Test Mod/Scripts/4_World"};
+				files[] = {"d3xters-class-selction/Scripts/4_World"};
 			};
 			class missionScriptModule
 			{
 				value = "";
-				files[] = {"Test Mod/Scripts/5_Mission"};
+				files[] = {"d3xters-class-selction/Scripts/5_Mission"};
 			};
 		};
 	};

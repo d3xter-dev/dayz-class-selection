@@ -12,7 +12,7 @@ class ClassMenu extends UIScriptedMenu {
 	}
 	
 	override Widget Init() {
-		layoutRoot = GetGame().GetWorkspace().CreateWidgets( "Test Mod\\Scripts\\5_Mission\\layouts\\menu.layout" );
+		layoutRoot = GetGame().GetWorkspace().CreateWidgets( "d3xters-class-selction\\Scripts\\5_Mission\\layouts\\menu.layout" );
 		return layoutRoot;
 	}
 	
@@ -27,7 +27,7 @@ class ClassMenu extends UIScriptedMenu {
 			
 			
 			foreach(JsonClassData jsonClassData: m_AvailableClasses) {
-				ref Widget classFrame  = GetGame().GetWorkspace().CreateWidgets( "Test Mod\\Scripts\\5_Mission\\layouts\\class.layout", layoutRoot);
+				ref Widget classFrame  = GetGame().GetWorkspace().CreateWidgets( "d3xters-class-selction\\Scripts\\5_Mission\\layouts\\class.layout", layoutRoot);
 				
 				classFrame.GetScript(classData);
 				classFrame.SetPos(startX, startY);

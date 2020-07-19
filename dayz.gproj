@@ -51,7 +51,7 @@ GameProjectClass {
 			Paths {
 				"DayZ Data/scripts/3_Game"
 				"DayZ-RPCFramework/RPCFramework/Addons/scripts/3_Game"
-				"Test Mod/Scripts/3_Game"
+				"d3xters-class-selction/Scripts/3_Game"
 			}
 			EntryPoint "CreateGame"
 		}
@@ -59,7 +59,7 @@ GameProjectClass {
 			Name "world"
 			Paths {
 			 "DayZ Data/scripts/4_World"
-			 "Test Mod/Scripts/4_World"
+			 "d3xters-class-selction/Scripts/4_World"
 			 }
 			EntryPoint ""
 		}
@@ -67,7 +67,7 @@ GameProjectClass {
 			Name "mission"
 			Paths {
 			 "DayZ Data/scripts/5_Mission"
-			 "Test Mod/Scripts/5_Mission"
+			 "d3xters-class-selction/Scripts/5_Mission"
 			 }
 			EntryPoint "CreateMission"
 		}
