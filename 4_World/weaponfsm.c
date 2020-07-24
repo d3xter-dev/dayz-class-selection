@@ -25,4 +25,4 @@ modded class WeaponFSM {
 			wpnDebugPrint("[wpnfsm] RandomizeFSMState - warning - cannot randomize, no states available");
 		}
 	}
-}
+};

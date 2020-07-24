@@ -1,7 +1,7 @@
 modded class MissionServer
 {
-	private string cfgPath = "$saves:";
-	const private string cfgPathServer = "$profile:";
+	const private string cfgPath = "$profile:";
+	const private string cfgMainDir = "ClassSelection\\";
 	const private string cfgClasses = "ClassSelection\\Classes\\";
 	const private string cfgPlayerSaves = "ClassSelection\\PlayerSaves\\";
 	
@@ -19,8 +19,7 @@ modded class MissionServer
 			GetRPCManager().AddRPC("ClassSelection", "RequestSyncAvailableClasses", this);
 			GetRPCManager().AddRPC("ClassSelection", "SetPlayerClass", this);
 			
-			cfgPath = cfgPathServer;
-			
+			if (!FileExist(cfgPath + cfgMainDir)) MakeDirectory(cfgPath + cfgMainDir);
 			if (!FileExist(cfgPath + cfgClasses)) MakeDirectory(cfgPath + cfgClasses);
 			if (!FileExist(cfgPath + cfgPlayerSaves)) MakeDirectory(cfgPath + cfgPlayerSaves);
 			if (!FileExist(cfgPath + "ClassSelection\\ClassDataExample.json")) SaveExampleJSON();
@@ -81,10 +80,21 @@ modded class MissionServer
 	}
 	
 	void SendSyncAvailableClasses(PlayerIdentity player) {
-		ref array<ref JsonClassData> CustomClasses = m_AvailableClasses;
+		ref array<ref JsonClassData> CustomClasses =  new array<ref JsonClassData>;
 		
 		if(m_PlayerClasses.Contains(player.GetId())) {
 			ref array<ref JsonClassSelection> playerClasses  = m_PlayerClasses.Get(player.GetId());
+			
+			foreach(JsonClassData copyClass: m_AvailableClasses) {
+				ref JsonClassData newClass = new JsonClassData();
+				newClass.className = copyClass.className;
+				newClass.primaryWeapons = copyClass.primaryWeapons;
+				newClass.secondaryWeapons = copyClass.secondaryWeapons;
+				newClass.utilities = copyClass.utilities;
+				newClass.clothes = copyClass.clothes;
+
+				CustomClasses.Insert(newClass);
+			}
 			
 			foreach(JsonClassData customClass: CustomClasses) {
 				foreach(JsonClassSelection playerClass: playerClasses) {
@@ -93,6 +103,8 @@ modded class MissionServer
 						
 						//Check Selected Primaries
 						foreach(JsonClassWeapon customClassPrimaryWeapon: customClass.primaryWeapons) {
+							customClassPrimaryWeapon.selected = false;
+							
 							if(customClassPrimaryWeapon.name == playerClass.primary.name) {
 								customClassPrimaryWeapon.selected = true;
 								
@@ -102,6 +114,8 @@ modded class MissionServer
 						
 						//Check Selected Secondaries
 						foreach(JsonClassWeapon customClassSecondaryWeapon: customClass.secondaryWeapons) {
+							customClassSecondaryWeapon.selected = false;
+							
 							if(customClassSecondaryWeapon.name == playerClass.secondary.name) {
 								customClassSecondaryWeapon.selected = true;
 								
@@ -111,6 +125,8 @@ modded class MissionServer
 						
 						//Check Selected Utilities
 						foreach(JsonClassWeapon customClassUtility: customClass.utilities) {
+							customClassUtility.selected = false;
+							
 							if(customClassUtility.name == playerClass.utility.name) {
 								customClassUtility.selected = true;
 							}
@@ -143,17 +159,24 @@ modded class MissionServer
 			if(m_PlayerClasses.Contains(sender.GetId())) {
 				ref array<ref JsonClassSelection> playerClasses = m_PlayerClasses.Get(sender.GetId());
 				
-				bool exsits = false;
 				
+				bool exists = false;
 				foreach(int classIndex, JsonClassSelection playerClass: playerClasses) {
-					playerClass.selected = false;
-					
-					if(selectedClass.className == playerClass.className) {
-						exsits = true;
+					if(playerClass) {
+						playerClass.selected = false;
 						playerClasses.Remove(classIndex);
+						
+						if(selectedClass.className == playerClass.className) {
+							exists  = true;
+							playerClasses.InsertAt(selectedClass, classIndex);
+						}
+						else {
+							playerClasses.InsertAt(playerClass, classIndex);
+						}
 					}
 				}
-				playerClasses.Insert(selectedClass);
+
+				if(!exists) playerClasses.Insert(selectedClass);
 				
 				m_PlayerClasses.Set(sender.GetId(), playerClasses);
 			}

@@ -20,7 +20,6 @@ class CfgMods
 		
 		dir = "d3xters-class-selction";
 		picture = "";
-		action = "";
 		hideName = 1;
 		hidePicture = 1;
 		name = "DayZ Class-Selection Mod";
