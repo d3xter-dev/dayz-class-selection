@@ -22,8 +22,14 @@ modded class MissionGameplay {
 	{
 		super.OnUpdate(timeslice);
 		
-		if(m_Initialized && !IsPaused() && !HasSelectedClass() && !GetClassMenu().GetLayoutRoot().IsVisible()) {
-			GetClassMenu().Toggle();
+		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
+		if(m_Initialized  && !IsPaused() && player && player.IsPlayerLoaded() && !IsPlayerRespawning() && player.IsAlive()) {
+			if(!HasSelectedClass()) {
+				GetClassMenu().Show();
+			}
+		}
+		else {
+			GetClassMenu().Hide();
 		}
 	}
 	

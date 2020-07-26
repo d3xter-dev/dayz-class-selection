@@ -103,7 +103,7 @@ class ClassMenu extends UIScriptedMenu {
 			m_currentClass.GetScript(data);
 			GetRPCManager().SendRPC("ClassSelection", "SetPlayerClass", new Param1<ref JsonClassSelection>(data.GetSelection()));	
 			selectedClass = true;
-			Toggle();
+			Hide();
 		}
 	}
 	
@@ -139,21 +139,33 @@ class ClassMenu extends UIScriptedMenu {
 	}
 	
 	void Toggle() {
+		if (!GetLayoutRoot().IsVisible()){
+			Show();
+		}
+		else {
+			Hide();
+		}
+	}
+	
+	void Show() {
 		if(!m_AvailableClasses || !m_AvailableClasses.Count()) {
 			GetRPCManager().SendRPC("ClassSelection", "RequestSyncAvailableClasses", null, true);
 		}
 		
 		UIManager UIMgr = GetGame().GetUIManager();
-		if(UIMgr) {
+		if(UIMgr && !GetLayoutRoot().IsVisible() && m_AvailableClasses && m_AvailableClasses.Count()) {
 			UIMgr.HideDialog(); 
 			UIMgr.CloseAll();
-		
-			if (!GetLayoutRoot().IsVisible() && m_AvailableClasses && m_AvailableClasses.Count()){
-				UIMgr.ShowScriptedMenu(this , NULL );
-			}
-			else {
-				UIMgr.HideScriptedMenu(this);
-			}
+			UIMgr.ShowScriptedMenu(this , NULL );
+		}
+	}
+	
+	void Hide() {
+		UIManager UIMgr = GetGame().GetUIManager();
+		if(UIMgr && GetLayoutRoot().IsVisible()) {
+			UIMgr.HideDialog(); 
+			UIMgr.CloseAll();
+			UIMgr.HideScriptedMenu(this);
 		}
 	}
 }
