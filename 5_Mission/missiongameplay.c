@@ -48,7 +48,7 @@ modded class MissionGameplay {
 			}
 		}
 		
-		return false;
+		return GetClassMenu().selectedClass;
 	}
 	
 	private ref ClassMenu GetClassMenu() {

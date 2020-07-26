@@ -2,6 +2,7 @@ class ClassMenu extends UIScriptedMenu {
 
 	private ref Widget m_currentClass;
 	private ref array<ref JsonClassData> m_AvailableClasses;
+	bool selectedClass = false;
 	
 	void ClassMenu(){
 		m_AvailableClasses = new ref array<ref JsonClassData>;
@@ -12,7 +13,7 @@ class ClassMenu extends UIScriptedMenu {
 	}
 	
 	override Widget Init() {
-		layoutRoot = GetGame().GetWorkspace().CreateWidgets( "d3xters-class-selction\\Scripts\\5_Mission\\layouts\\menu.layout" );
+		layoutRoot = GetGame().GetWorkspace().CreateWidgets( "d3xters-class-selection\\Scripts\\5_Mission\\layouts\\menu.layout" );
 		return layoutRoot;
 	}
 	
@@ -27,7 +28,7 @@ class ClassMenu extends UIScriptedMenu {
 			
 			
 			foreach(JsonClassData jsonClassData: m_AvailableClasses) {
-				ref Widget classFrame  = GetGame().GetWorkspace().CreateWidgets( "d3xters-class-selction\\Scripts\\5_Mission\\layouts\\class.layout", layoutRoot);
+				ref Widget classFrame  = GetGame().GetWorkspace().CreateWidgets( "d3xters-class-selection\\Scripts\\5_Mission\\layouts\\class.layout", layoutRoot);
 				
 				classFrame.GetScript(classData);
 				classFrame.SetPos(startX, startY);
@@ -101,6 +102,7 @@ class ClassMenu extends UIScriptedMenu {
 			ClassData data;
 			m_currentClass.GetScript(data);
 			GetRPCManager().SendRPC("ClassSelection", "SetPlayerClass", new Param1<ref JsonClassSelection>(data.GetSelection()));	
+			selectedClass = true;
 			Toggle();
 		}
 	}

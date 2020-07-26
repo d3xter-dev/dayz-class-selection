@@ -20,9 +20,12 @@ modded class MissionServer
 			GetRPCManager().AddRPC("ClassSelection", "SetPlayerClass", this);
 			
 			if (!FileExist(cfgPath + cfgMainDir)) MakeDirectory(cfgPath + cfgMainDir);
-			if (!FileExist(cfgPath + cfgClasses)) MakeDirectory(cfgPath + cfgClasses);
+			if (!FileExist(cfgPath + cfgClasses)) {
+				MakeDirectory(cfgPath + cfgClasses);
+				SaveExampleJSON(cfgPath + cfgClasses);
+			}
 			if (!FileExist(cfgPath + cfgPlayerSaves)) MakeDirectory(cfgPath + cfgPlayerSaves);
-			if (!FileExist(cfgPath + "ClassSelection\\ClassDataExample.json")) SaveExampleJSON();
+			if (!FileExist(cfgPath + "ClassSelection\\ClassDataExample.json")) SaveExampleJSON(cfgPath + "ClassSelection\\");
 			
 			//Load Existing Classes
 			 m_AvailableClasses = new array<ref JsonClassData>;
@@ -50,7 +53,7 @@ modded class MissionServer
 		}
 	}
 	
-	void SaveExampleJSON() {
+	void SaveExampleJSON(string path) {
 		JsonClassData example = new JsonClassData();
 			
 		example.className = "Assault";
@@ -69,7 +72,7 @@ modded class MissionServer
 			 new JsonClassClothing("M65Jacket_Black", "GorkaPants_PautRev", "MilitaryBoots_Redpunk", "TortillaBag", "PlateCarrierComplete")
 		};
 		
-		JsonFileLoader<JsonClassData>.JsonSaveFile(cfgPath + "ClassSelection\\ClassDataExample.json", example);
+		JsonFileLoader<JsonClassData>.JsonSaveFile(path + "ClassDataExample.json", example);
 	}
 	
 	void RequestSyncAvailableClasses(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {
@@ -82,19 +85,19 @@ modded class MissionServer
 	void SendSyncAvailableClasses(PlayerIdentity player) {
 		ref array<ref JsonClassData> CustomClasses =  new array<ref JsonClassData>;
 		
+		foreach(JsonClassData copyClass: m_AvailableClasses) {
+			ref JsonClassData newClass = new JsonClassData();
+			newClass.className = copyClass.className;
+			newClass.primaryWeapons = copyClass.primaryWeapons;
+			newClass.secondaryWeapons = copyClass.secondaryWeapons;
+			newClass.utilities = copyClass.utilities;
+			newClass.clothes = copyClass.clothes;
+
+			CustomClasses.Insert(newClass);
+		}
+		
 		if(m_PlayerClasses.Contains(player.GetId())) {
 			ref array<ref JsonClassSelection> playerClasses  = m_PlayerClasses.Get(player.GetId());
-			
-			foreach(JsonClassData copyClass: m_AvailableClasses) {
-				ref JsonClassData newClass = new JsonClassData();
-				newClass.className = copyClass.className;
-				newClass.primaryWeapons = copyClass.primaryWeapons;
-				newClass.secondaryWeapons = copyClass.secondaryWeapons;
-				newClass.utilities = copyClass.utilities;
-				newClass.clothes = copyClass.clothes;
-
-				CustomClasses.Insert(newClass);
-			}
 			
 			foreach(JsonClassData customClass: CustomClasses) {
 				foreach(JsonClassSelection playerClass: playerClasses) {

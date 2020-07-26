@@ -18,7 +18,7 @@ class CfgMods
 	class classslection
 	{
 		
-		dir = "d3xters-class-selction";
+		dir = "d3xters-class-selection";
 		picture = "";
 		hideName = 1;
 		hidePicture = 1;
@@ -36,17 +36,17 @@ class CfgMods
 			class gameScriptModule
 			{
 				value = "";
-				files[] = {"d3xters-class-selction/Scripts/3_Game"};
+				files[] = {"d3xters-class-selection/Scripts/3_Game"};
 			};
 			class worldScriptModule
 			{
 				value = "";
-				files[] = {"d3xters-class-selction/Scripts/4_World"};
+				files[] = {"d3xters-class-selection/Scripts/4_World"};
 			};
 			class missionScriptModule
 			{
 				value = "";
-				files[] = {"d3xters-class-selction/Scripts/5_Mission"};
+				files[] = {"d3xters-class-selection/Scripts/5_Mission"};
 			};
 		};
 	};
