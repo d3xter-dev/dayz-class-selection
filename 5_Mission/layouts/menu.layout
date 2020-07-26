@@ -35,7 +35,7 @@ FrameWidgetClass rootFrame {
      vexactpos 1
      hexactsize 0
      vexactsize 1
-     text "Select your class & wepaons!"
+     text "Select your class & weapons!"
      "text halign" center
     }
     ButtonWidgetClass SelectButton {
