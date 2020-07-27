@@ -5,7 +5,7 @@ Each class can have many weapons to select from.
 
 ## Features
 
- *__Players will receive a fully loaded and ready to shoot weapon.__
+ * __Players will receive a fully loaded and ready to shoot weapon.__
  * Players can choose from diffrent items in each class
  * Players will respawn with the same class after death, but they can change it by pressing ","
  * Players will be forced to select a class on first join
