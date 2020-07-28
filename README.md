@@ -1,10 +1,16 @@
 # DayZ Class-Selection
 
 This mod adds an Class-Selection Menu to the game, server-owners can customize the classes and the weapons available. (via JSON files)
-Player will be forced to select a class on first join, after that they can change their class with "," and will respawn with the same Class on death,
-
 Each class can have many weapons to select from.
-__The player will receive a fully loaded and ready to shoot weapon.__
+
+## Features
+
+ * __Players will receive a fully loaded and ready to shoot weapon.__
+ * Players can choose from diffrent items in each class
+ * Players will respawn with the same class after death, but they can change it by pressing ","
+ * Players will be forced to select a class on first join
+ * Attachments already have batteries if needed
+
 
 ## Status: Beta
 ________________________________________________________
@@ -18,13 +24,16 @@ Use the ClassDataExample.json as template and create your classes in the classes
 ## Incompatible Mods:
 * Expansion Mod
 
-__Make sure that you DON'T override the "EquipCharacter()" function in your CustomMission or via. a modded MissionServer class / don't clear the player items there, if you use it.__
+### Important!
+__(Following needed if you override the "EquipCharacter()" function in your CustomMission (init.c) or via. a modded MissionServer class.)__
+Make sure that you call "GetClassSelection().GiveClassEquipment(m_player);" and don't clear player items after that call, for obvious reasons.
 
 ## Future-Development:
 
-* Json for general items given to all players
-* Add Quantity Field to utility items / add own type
-* Add support for container items e.g. first aid kit etc.
+*  Json for general items given to all players
+*  Whitelist for classes
+*  Add Quantity Field to utility items / add own type
+*  Add support for container items e.g. first aid kit etc.
 * Attachment selection Menu
 * Clothing selection Menu
 
