@@ -21,11 +21,14 @@ class ClassMenu extends UIScriptedMenu {
 		if(m_AvailableClasses && m_AvailableClasses.Count()) {
 			super.OnShow();
 			GetGame().GetInput().ChangeGameFocus( 1 );
-			
-			float startX = 80;
-			float startY = 100;
+		
 			ClassData classData = null;
 			
+			float containerW, containerH, frameW, frameH;
+			GetLayoutRoot().GetSize(containerW, containerH);
+				
+			float startX = 80;
+			float startY = containerH * 0.14;
 			
 			foreach(JsonClassData jsonClassData: m_AvailableClasses) {
 				ref Widget classFrame  = GetGame().GetWorkspace().CreateWidgets( "d3xters-class-selection\\Scripts\\5_Mission\\layouts\\class.layout", layoutRoot);
@@ -33,6 +36,7 @@ class ClassMenu extends UIScriptedMenu {
 				classFrame.GetScript(classData);
 				classFrame.SetPos(startX, startY);
 				layoutRoot.AddChild(classFrame);
+				classFrame.GetSize(frameW, frameH);
 				
 				classData.layoutRoot = classFrame;
 				classData.LoadFromJSON(jsonClassData);
@@ -40,8 +44,8 @@ class ClassMenu extends UIScriptedMenu {
 				if(classData.selected) {
 					m_currentClass = classFrame;
 				}
-				
-				startX += 380;
+			
+				startX += (containerW - 160 - (frameW * 3)) / 2 + frameW ;
 			}
 			
 			ChangeCurrentClass(m_currentClass);

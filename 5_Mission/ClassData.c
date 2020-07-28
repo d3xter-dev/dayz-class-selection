@@ -81,7 +81,7 @@ class ClassData extends UIScriptedMenu {
 					CurrentSecondaryIndex = 0;
 				}
 			break;
-			case "utiltiy":
+			case "utility":
 				maxIndex = Utilities.Count() - 1;
 				if(CurrentUtilityIndex != maxIndex) {
 					CurrentUtilityIndex++;
@@ -115,7 +115,7 @@ class ClassData extends UIScriptedMenu {
 					CurrentSecondaryIndex = maxIndex;
 				}
 			break;
-			case "utiltiy":
+			case "utility":
 				maxIndex = Utilities.Count() - 1;
 				if(CurrentUtilityIndex != 0) {
 					CurrentUtilityIndex--;
