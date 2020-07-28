@@ -1,14 +1,14 @@
 class ClassData extends UIScriptedMenu {
 	
 	protected string ClassName = "CLASSNAME";
-	protected ref array<ref ClassWeapon> PrimaryWeapons;
-	protected ref array<ref ClassWeapon> SecondaryWeapons;
-	protected ref array<ref ClassWeapon> Utilities;
+	protected ref array<ref ClassItem> PrimaryItems;
+	protected ref array<ref ClassItem> SecondaryItems;
+	protected ref array<ref ClassItem> Utilities;
 	protected ref array<ref ClassClothing> Clothes;
 
-	protected ClassWeapon CurrentPrimary;
-	protected ClassWeapon CurrentSecondary;
-	protected ClassWeapon CurrentUtility;
+	protected ClassItem CurrentPrimary;
+	protected ClassItem CurrentSecondary;
+	protected ClassItem CurrentUtility;
 	
 	protected int CurrentPrimaryIndex = 0;
 	protected int CurrentSecondaryIndex = 0;
@@ -17,9 +17,9 @@ class ClassData extends UIScriptedMenu {
 	bool selected = false;
 	
 	void ClassData() {
-		PrimaryWeapons = new array<ref ClassWeapon>;
-		SecondaryWeapons = new array<ref ClassWeapon>;
-		Utilities = new array<ref ClassWeapon>;
+		PrimaryItems = new array<ref ClassItem>;
+		SecondaryItems = new array<ref ClassItem>;
+		Utilities = new array<ref ClassItem>;
 		Clothes = new array<ref ClassClothing>;
 	}
 	
@@ -32,24 +32,24 @@ class ClassData extends UIScriptedMenu {
 		}
 	}
 	
-	void SetPrimaryWeapons(array<ref ClassWeapon> weapons) {
-		PrimaryWeapons.Clear();
-		foreach(ClassWeapon weapon: weapons) {
-			PrimaryWeapons.Insert(weapon);
+	void SetPrimaryItems(array<ref ClassItem> items) {
+		PrimaryItems.Clear();
+		foreach(ClassItem item: items) {
+			PrimaryItems.Insert(item);
 		}
 	}
 	
-	void SetSecondaryWeapons(array<ref ClassWeapon> weapons) {
-		SecondaryWeapons.Clear();
-		foreach(ClassWeapon weapon: weapons) {
-			SecondaryWeapons.Insert(weapon);
+	void SetSecondaryItems(array<ref ClassItem> items) {
+		SecondaryItems.Clear();
+		foreach(ClassItem item: items) {
+			SecondaryItems.Insert(item);
 		}
 	}
 	
-	void SetUtilities(array<ref ClassWeapon> weapons) {
+	void SetUtilities(array<ref ClassItem> items) {
 		Utilities.Clear();
-		foreach(ClassWeapon weapon: weapons) {
-			Utilities.Insert(weapon);
+		foreach(ClassItem item: items) {
+			Utilities.Insert(item);
 		}
 	}
 		
@@ -64,7 +64,7 @@ class ClassData extends UIScriptedMenu {
 		int maxIndex = 0;
 		switch(category) {
 			case "primary":
-				maxIndex = PrimaryWeapons.Count() - 1;
+				maxIndex = PrimaryItems.Count() - 1;
 				if(CurrentPrimaryIndex != maxIndex) {
 					CurrentPrimaryIndex++;
 				}
@@ -73,7 +73,7 @@ class ClassData extends UIScriptedMenu {
 				}
 			break;
 			case "secondary":
-				maxIndex = SecondaryWeapons.Count() - 1;
+				maxIndex = SecondaryItems.Count() - 1;
 				if(CurrentSecondaryIndex != maxIndex) {
 					CurrentSecondaryIndex++;
 				}
@@ -98,7 +98,7 @@ class ClassData extends UIScriptedMenu {
 		int maxIndex = 0;
 		switch(category) {
 			case "primary":
-				maxIndex = PrimaryWeapons.Count() - 1;
+				maxIndex = PrimaryItems.Count() - 1;
 				if(CurrentPrimaryIndex != 0) {
 					CurrentPrimaryIndex--;
 				}
@@ -107,7 +107,7 @@ class ClassData extends UIScriptedMenu {
 				}
 			break;
 			case "secondary":
-				maxIndex = SecondaryWeapons.Count() - 1;
+				maxIndex = SecondaryItems.Count() - 1;
 				if(CurrentSecondaryIndex != 0) {
 					CurrentSecondaryIndex--;
 				}
@@ -134,15 +134,15 @@ class ClassData extends UIScriptedMenu {
 		ItemPreviewWidget secondaryPreview =  ItemPreviewWidget.Cast(layoutRoot.FindAnyWidget("ClassSecondaryPreview"));
 		ItemPreviewWidget utilityPreview =  ItemPreviewWidget.Cast(layoutRoot.FindAnyWidget("ClassUtilityPreview"));
 		
-		if(PrimaryWeapons.Count()) {
+		if(PrimaryItems.Count()) {
 			if(CurrentPrimary) CurrentPrimary.selected = !CurrentPrimary.selected;
-			CurrentPrimary = PrimaryWeapons.Get(CurrentPrimaryIndex);
+			CurrentPrimary = PrimaryItems.Get(CurrentPrimaryIndex);
 			CurrentPrimary.selected = !CurrentPrimary.selected;
 		}
 		
-		if(SecondaryWeapons.Count()) {
+		if(SecondaryItems.Count()) {
 			if(CurrentSecondary) CurrentSecondary.selected = !CurrentSecondary.selected;
-			CurrentSecondary = SecondaryWeapons.Get(CurrentSecondaryIndex);
+			CurrentSecondary = SecondaryItems.Get(CurrentSecondaryIndex);
 			CurrentSecondary.selected = !CurrentSecondary.selected;
 		}
 		
@@ -152,42 +152,42 @@ class ClassData extends UIScriptedMenu {
 			CurrentUtility.selected = !CurrentUtility.selected;
 		}
 		
-		if(CurrentPrimary) primaryPreview.SetItem(CurrentPrimary.GetWeapon());
-		if(CurrentUtility) secondaryPreview.SetItem(CurrentSecondary.GetWeapon());
-		if(CurrentSecondary) utilityPreview.SetItem(CurrentUtility.GetWeapon());
+		if(CurrentPrimary) primaryPreview.SetItem(CurrentPrimary.GetItem());
+		if(CurrentSecondary) secondaryPreview.SetItem(CurrentSecondary.GetItem());
+		if(CurrentUtility) utilityPreview.SetItem(CurrentUtility.GetItem());
 	}
 	
 	void LoadFromJSON(JsonClassData data) {
 		SetClassName(data.className);
 		selected = data.selected;
 		
-		ClassWeapon newWeapon;
-		array<ref ClassWeapon> primaryWeapons = new array<ref ClassWeapon>();
-		foreach(JsonClassWeapon jsonWp: data.primaryWeapons) {
-			newWeapon = ClassWeapon.LoadFromJSON(jsonWp);
-			primaryWeapons.Insert(newWeapon);
+		ClassItem newItem;
+		array<ref ClassItem> primaryItems = new array<ref ClassItem>();
+		foreach(JsonClassItem jsonWp: data.primaryItems) {
+			newItem = ClassItem.LoadFromJSON(jsonWp);
+			primaryItems.Insert(newItem);
 			
-			if(newWeapon.selected) {
-				CurrentPrimaryIndex = primaryWeapons.Count() - 1;
+			if(newItem.selected) {
+				CurrentPrimaryIndex = primaryItems.Count() - 1;
 			}
 		}
 		
-		array<ref ClassWeapon> secondaryWeapons = new array<ref ClassWeapon>;
-		foreach(JsonClassWeapon jsonWs: data.secondaryWeapons) {
-			newWeapon = ClassWeapon.LoadFromJSON(jsonWs);
-			secondaryWeapons.Insert(newWeapon);
+		array<ref ClassItem> secondaryItems = new array<ref ClassItem>;
+		foreach(JsonClassItem jsonWs: data.secondaryItems) {
+			newItem = ClassItem.LoadFromJSON(jsonWs);
+			secondaryItems.Insert(newItem);
 			
-			if(newWeapon.selected) {
-				CurrentSecondaryIndex = secondaryWeapons.Count() - 1;
+			if(newItem.selected) {
+				CurrentSecondaryIndex = secondaryItems.Count() - 1;
 			}
 		}
 		
-		array<ref ClassWeapon> utilities = new array<ref ClassWeapon>;
-		foreach(JsonClassWeapon jsonU: data.utilities) {
-			newWeapon = ClassWeapon.LoadFromJSON(jsonU);
-			utilities.Insert(newWeapon);
+		array<ref ClassItem> utilities = new array<ref ClassItem>;
+		foreach(JsonClassItem jsonU: data.utilities) {
+			newItem = ClassItem.LoadFromJSON(jsonU);
+			utilities.Insert(newItem);
 			
-			if(newWeapon.selected) {
+			if(newItem.selected) {
 				CurrentUtilityIndex = utilities.Count() - 1;
 			}
 		}
@@ -197,8 +197,8 @@ class ClassData extends UIScriptedMenu {
 			clothings.Insert(new ClassClothing(jsonC.top, jsonC.pants, jsonC.shoes, jsonC.backpack, jsonC.vest));
 		}
 		
-		SetPrimaryWeapons(primaryWeapons);
-		SetSecondaryWeapons(secondaryWeapons);
+		SetPrimaryItems(primaryItems);
+		SetSecondaryItems(secondaryItems);
 		SetUtilities(utilities);
 		SetClothes(clothings);
 		

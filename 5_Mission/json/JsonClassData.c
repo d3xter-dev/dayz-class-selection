@@ -1,12 +1,12 @@
-typedef array<ref JsonClassWeapon> JsonClassWeaponArray;
+typedef array<ref JsonClassItem> JsonClassItemArray;
 typedef array<ref JsonClassClothing> JsonClassClothingArray;
 
 class JsonClassData {
 	string className;
 	bool selected;
 	
-	ref JsonClassWeaponArray primaryWeapons;
-	ref JsonClassWeaponArray secondaryWeapons;
-	ref JsonClassWeaponArray utilities;
+	ref JsonClassItemArray primaryItems;
+	ref JsonClassItemArray secondaryItems;
+	ref JsonClassItemArray utilities;
 	ref JsonClassClothingArray clothes;
 };

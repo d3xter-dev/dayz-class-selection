@@ -62,16 +62,16 @@ class ClassSelectionClass {
 		JsonClassData example = new JsonClassData();
 			
 		example.className = "Assault";
-		example.primaryWeapons = {
-			 new JsonClassWeapon("M4A1", {"M4_RISHndgrd_Black", "M4_MPBttstck_Black", "ACOGOptic"}, {new JsonClassMagazine("Mag_STANAG_30Rnd", 5)}),
-			 new JsonClassWeapon("Mosin9130", {}, {new JsonClassMagazine("Ammo_762x54", 5)}),
-			 new JsonClassWeapon("Izh43Shotgun", {}, {new JsonClassMagazine("Ammo_12gaPellets", 5)})
+		example.primaryItems = {
+			 new JsonClassItem("M4A1", 0, {"M4_RISHndgrd_Black", "M4_MPBttstck_Black", "ACOGOptic"}, null, {new JsonClassMagazine("Mag_STANAG_30Rnd", 5)}),
+			 new JsonClassItem("Mosin9130", 0, {}, null, {new JsonClassMagazine("Ammo_762x54", 5)}),
+			 new JsonClassItem("Izh43Shotgun", 0, {}, null, {new JsonClassMagazine("Ammo_12gaPellets", 5)})
 		};
-		example.secondaryWeapons = {
-			 new JsonClassWeapon("MakarovIJ70", {"MakarovPBSuppressor"}, {new JsonClassMagazine("MAG_IJ70_8RND", 5)})
+		example.secondaryItems = {
+			 new JsonClassItem("MakarovIJ70", 0, {"MakarovPBSuppressor"}, null, {new JsonClassMagazine("MAG_IJ70_8RND", 5)})
 		};
 		example.utilities = {
-			 new JsonClassWeapon("LandMineTrap")
+			 new JsonClassItem("LandMineTrap")
 		};
 		example.clothes = {
 			 new JsonClassClothing("M65Jacket_Black", "GorkaPants_PautRev", "MilitaryBoots_Redpunk", "TortillaBag", "PlateCarrierComplete")
@@ -93,8 +93,8 @@ class ClassSelectionClass {
 		foreach(JsonClassData copyClass: m_AvailableClasses) {
 			ref JsonClassData newClass = new JsonClassData();
 			newClass.className = copyClass.className;
-			newClass.primaryWeapons = copyClass.primaryWeapons;
-			newClass.secondaryWeapons = copyClass.secondaryWeapons;
+			newClass.primaryItems = copyClass.primaryItems;
+			newClass.secondaryItems = copyClass.secondaryItems;
 			newClass.utilities = copyClass.utilities;
 			newClass.clothes = copyClass.clothes;
 
@@ -110,7 +110,7 @@ class ClassSelectionClass {
 						customClass.selected = playerClass.selected;
 						
 						//Check Selected Primaries
-						foreach(JsonClassWeapon customClassPrimaryWeapon: customClass.primaryWeapons) {
+						foreach(JsonClassItem customClassPrimaryWeapon: customClass.primaryItems) {
 							customClassPrimaryWeapon.selected = false;
 							
 							if(customClassPrimaryWeapon.name == playerClass.primary.name) {
@@ -121,7 +121,7 @@ class ClassSelectionClass {
 						}
 						
 						//Check Selected Secondaries
-						foreach(JsonClassWeapon customClassSecondaryWeapon: customClass.secondaryWeapons) {
+						foreach(JsonClassItem customClassSecondaryWeapon: customClass.secondaryItems) {
 							customClassSecondaryWeapon.selected = false;
 							
 							if(customClassSecondaryWeapon.name == playerClass.secondary.name) {
@@ -132,7 +132,7 @@ class ClassSelectionClass {
 						}
 						
 						//Check Selected Utilities
-						foreach(JsonClassWeapon customClassUtility: customClass.utilities) {
+						foreach(JsonClassItem customClassUtility: customClass.utilities) {
 							customClassUtility.selected = false;
 							
 							if(customClassUtility.name == playerClass.utility.name) {
@@ -230,94 +230,122 @@ class ClassSelectionClass {
 		player.GetInventory().CreateInInventory(classData.vest);
 	}
 	
-	Weapon_Base SpawnFullWepaon(ClassWeapon weapon, PlayerBase player, bool InHands = false) {
-		TStringArray attachments;
-		TStringArray mags;
-		Weapon_Base weaponBase;
+	ItemBase SpawnItem(ClassItem item, PlayerBase player, bool InHands = false) {
+		ItemBase ent_Item;
+		TStringArray mags =  item.GetMagazines();
 		
-		Print(weapon.GetWeapon().GetType());
 		if(InHands) {
-			 weaponBase = Weapon_Base.Cast(player.GetHumanInventory().CreateInHands(weapon.GetWeapon().GetType()));
+			 ent_Item = ItemBase.Cast(player.GetHumanInventory().CreateInHands(item.GetItem().GetType()));
 		} 
 		else {
-			 weaponBase = Weapon_Base.Cast(player.GetInventory().CreateInInventory(weapon.GetWeapon().GetType()));
+			 ent_Item = ItemBase.Cast(player.GetInventory().CreateInInventory(item.GetItem().GetType()));
 		}
 		
-		if(weaponBase) {
-			mags =  weapon.GetMagazines();
-			Magazine newMag;
-			foreach(string mag: mags) {
-				newMag = Magazine.Cast(player.GetInventory().CreateInInventory(mag));
-			}
+		if(mags && mags.Count()) {
+			Weapon_Base weaponBase = Weapon_Base.Cast(ent_Item);
 			
-			if(GetGame().IsMultiplayer())
-	        {
-	            GetGame().RemoteObjectDelete(weaponBase);
-	            GetGame().RemoteObjectDelete(newMag);
-	        }			
-	
-			int mi = weaponBase.GetCurrentMuzzle();
-			bool has_mag = false;
-			bool has_bullet = false;
-			int animationIndex = 0;
-	
-			//Attach Mag if possible
-			if(newMag && weaponBase.CanAttachMagazine(mi, newMag)) {
-				weaponBase.AttachMagazine(mi, newMag);
-				pushToChamberFromAttachedMagazine(weaponBase, mi);
-				has_bullet = true;
-				has_mag = true;
-			}
-			else {
-				float ammo_damage;
-				string ammo_type;
-					
-				if(newMag && newMag.LocalAcquireCartridge(ammo_damage, ammo_type)){
-					if(weaponBase.GetInternalMagazineMaxCartridgeCount(mi)) {
-						while(!weaponBase.IsInternalMagazineFull(mi)) {
-							weaponBase.PushCartridgeToInternalMagazine(mi, ammo_damage, ammo_type);
+			if(weaponBase) {
+				Magazine newMag;
+				foreach(string mag: mags) {
+					newMag = Magazine.Cast(player.GetInventory().CreateInInventory(mag));
+				}
+				
+				if(GetGame().IsMultiplayer())
+		        {
+		            GetGame().RemoteObjectDelete(weaponBase);
+		            GetGame().RemoteObjectDelete(newMag);
+		        }			
+		
+				int mi = weaponBase.GetCurrentMuzzle();
+				bool has_mag = false;
+				bool has_bullet = false;
+				int animationIndex = 0;
+		
+				//Attach Mag if possible
+				if(newMag && weaponBase.CanAttachMagazine(mi, newMag)) {
+					weaponBase.AttachMagazine(mi, newMag);
+					pushToChamberFromAttachedMagazine(weaponBase, mi);
+					has_bullet = true;
+					has_mag = true;
+				}
+				else {
+					float ammo_damage;
+					string ammo_type;
+						
+					if(newMag && newMag.LocalAcquireCartridge(ammo_damage, ammo_type)){
+						if(weaponBase.GetInternalMagazineMaxCartridgeCount(mi)) {
+							while(!weaponBase.IsInternalMagazineFull(mi)) {
+								weaponBase.PushCartridgeToInternalMagazine(mi, ammo_damage, ammo_type);
+							}
+						}
+						
+						for(int i = 0; i < weaponBase.GetMuzzleCount(); i++) {
+							weaponBase.PushCartridgeToChamber(i, ammo_damage, ammo_type);
+							has_bullet = true;
+						}
+						
+						if(weaponBase.IsInherited(BoltActionRifle_InnerMagazine_Base)) {
+							animationIndex = 1;
+						}
+						
+						if (weaponBase.IsInherited(BoltActionRifle_InnerMagazine_Base) || weaponBase.IsInherited(DoubleBarrel_Base)) {
+							has_bullet = false;
 						}
 					}
-					
-					for(int i = 0; i < weaponBase.GetMuzzleCount(); i++) {
-						weaponBase.PushCartridgeToChamber(i, ammo_damage, ammo_type);
-						has_bullet = true;
-					}
-					
-					if(weaponBase.IsInherited(BoltActionRifle_InnerMagazine_Base)) {
-						animationIndex = 1;
-					}
-					
-					if (weaponBase.IsInherited(BoltActionRifle_InnerMagazine_Base) || weaponBase.IsInherited(DoubleBarrel_Base)) {
-						has_bullet = false;
-					}
 				}
-			}
-			
-			weaponBase.UpdateAnimationState(has_bullet, has_mag, animationIndex);
-	
-			if(GetGame().IsMultiplayer())
-	        {
-	            GetGame().RemoteObjectCreate(weaponBase);
-	            GetGame().RemoteObjectCreate(newMag);
-	        }
 				
-			attachments =  weapon.GetAttachments();
-			foreach(string toAddAttachment: attachments) {
-				EntityAI addedAttachment = weaponBase.GetInventory().CreateAttachment(toAddAttachment);
-				addedAttachment.GetInventory().CreateAttachment("Battery9V");
-			}	
-			
-			return weaponBase;
+				weaponBase.UpdateAnimationState(has_bullet, has_mag, animationIndex);
+		
+				if(GetGame().IsMultiplayer())
+		        {
+		            GetGame().RemoteObjectCreate(weaponBase);
+		            GetGame().RemoteObjectCreate(newMag);
+		        }
+			}
 		}
 		
-		return null;
+		
+		TStringArray attachments =  item.GetAttachments();
+		foreach(string attachment: attachments) {
+			EntityAI addedAttachment = ent_Item.GetInventory().CreateAttachment(attachment);
+			addedAttachment.GetInventory().CreateAttachment("Battery9V");
+		}
+		
+		if(item.GetQuantity() > 0) {
+			ent_Item.SetQuantity(item.GetQuantity());
+		}	
+	
+		//ToDo: Cargo
+		
+		return ent_Item;
 	}
 	
 	void LoadPlayerData(PlayerIdentity identity) {
 		ref array<ref JsonClassSelection> playerClasses = new array<ref JsonClassSelection>;
 	    JsonFileLoader<array<ref JsonClassSelection>>.JsonLoadFile(cfgPath + cfgPlayerSaves + identity.GetId() + ".json", playerClasses);
 		m_PlayerClasses.Set(identity.GetId(), playerClasses);
+	}
+	
+	void CheckClassItem(array<ref JsonClassItem> baseItems, JsonClassItem selectedItem, out ClassItem foundItem) {
+		foreach(JsonClassItem baseItem: baseItems){
+			if(baseItem.name == selectedItem.name) {
+				foundItem = ClassItem.LoadFromJSON(baseItem);
+				
+				if(selectedItem.attachments) {
+					bool validAttachments = true;
+					
+					foreach(string attachemnt: selectedItem.attachments) {
+						if(baseItem.attachments.Find(attachemnt)) {
+							validAttachments = false;
+						}
+					}
+					
+					if(validAttachments) {
+						foundItem.SetAttachments(selectedItem.attachments);
+					}
+				}
+			}
+		}
 	}
 
 	void GiveClassEquipment(EntityAI ent_player) {
@@ -341,70 +369,25 @@ class ClassSelectionClass {
 			if(selectedClass) {
 				//Check if Class has Weapons and attachments available
 				ref JsonClassData foundClass;
-				ref ClassWeapon foundPrimary; 
-				ref ClassWeapon foundSecondary; 
-				ref ClassWeapon foundUtility; 
+				ref ClassItem foundPrimary; 
+				ref ClassItem foundSecondary; 
+				ref ClassItem foundUtility; 
 				
 				foreach(JsonClassData baseClass: m_AvailableClasses) {
 					if(baseClass.className == selectedClass.className) {
 						foundClass = baseClass;
 						
-						bool validAttachments;
-						
-						//Check Primary
-						foreach(JsonClassWeapon basePrimaryWeapon: baseClass.primaryWeapons){
-							if(basePrimaryWeapon.name == selectedClass.primary.name) {
-								foundPrimary = ClassWeapon.LoadFromJSON(basePrimaryWeapon);
-								
-								if(selectedClass.primary.attachments) {
-									validAttachments = true;
-									foreach(string primary_attachment: selectedClass.primary.attachments) {
-										if(basePrimaryWeapon.attachments.Find(primary_attachment)) {
-											validAttachments = false;
-										}
-									}
-									
-									if(validAttachments) {
-										foundPrimary.SetAttachments(selectedClass.primary.attachments);
-									}
-								}
-							}
-						}
-						
-						//Check Secondary
-						foreach(JsonClassWeapon baseSecondaryWeapon: baseClass.secondaryWeapons){
-							if(baseSecondaryWeapon.name == selectedClass.secondary.name) {
-								foundSecondary = ClassWeapon.LoadFromJSON(baseSecondaryWeapon);
-								
-								if(selectedClass.secondary.attachments) {
-									validAttachments = true;
-									foreach(string secondary_attachment: selectedClass.secondary.attachments) {
-										if(baseSecondaryWeapon.attachments.Find(secondary_attachment)) {
-											validAttachments = false;
-										}
-									}
-									
-									if(validAttachments) {
-										foundSecondary.SetAttachments(selectedClass.secondary.attachments);
-									}
-								}
-							}
-						}
-						
-						//Check Utility
-						foreach(JsonClassWeapon baseUtility: baseClass.utilities){
-							if(baseUtility.name == selectedClass.utility.name) {
-								foundUtility = ClassWeapon.LoadFromJSON(baseUtility);
-							}
-						}
+						CheckClassItem(baseClass.primaryItems, selectedClass.primary, foundPrimary);
+						CheckClassItem(baseClass.secondaryItems, selectedClass.secondary, foundSecondary);
+						CheckClassItem(baseClass.utilities, selectedClass.utility, foundUtility);
 					}
 				}
 				
 				if(foundClass && foundPrimary) {
 					SetClothes(foundClass.clothes.GetRandomElement(), player);
-					player.SetQuickBarEntityShortcut(SpawnFullWepaon(foundPrimary, player, true), 0);
-					player.SetQuickBarEntityShortcut(SpawnFullWepaon(foundSecondary, player), 1);
-					player.SetQuickBarEntityShortcut(SpawnFullWepaon(foundUtility, player), 2);
+					player.SetQuickBarEntityShortcut(SpawnItem(foundPrimary, player, true), 0);
+					player.SetQuickBarEntityShortcut(SpawnItem(foundSecondary, player), 1);
+					player.SetQuickBarEntityShortcut(SpawnItem(foundUtility, player), 2);
 				}			
 			}
 		}
