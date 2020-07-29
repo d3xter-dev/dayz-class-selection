@@ -35,8 +35,11 @@ class ClassItem {
 		//CREATE FAKE MAG
 		Weapon_Base gun = Weapon_Base.Cast(m_Entity);
 		Magazine mag = Magazine.Cast(GetGame().CreateObject(type, Vector(0, 0, 0), true));
-		gun.AttachMagazine(0, mag);
-		gun.SelectionMagazineShow();
+		
+		if(gun && mag) {
+			gun.AttachMagazine(0, mag);
+			gun.SelectionMagazineShow();
+		}
 		
 		for(int i = 0; i < quantity; i++) {
 			m_Magazines.Insert(type);

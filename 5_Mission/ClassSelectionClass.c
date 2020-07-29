@@ -5,6 +5,7 @@ class ClassSelectionClass {
 	const private string cfgPlayerSaves = "ClassSelection\\PlayerSaves\\";
 	
 	ref array<ref JsonClassData> m_AvailableClasses;
+	ref array<ref JsonClassItem> m_GerneralItems;
 	ref map<string, ref array<ref JsonClassSelection>> m_PlayerClasses;
 	
 	void ClassSelectionClass() {
@@ -17,13 +18,18 @@ class ClassSelectionClass {
 			if (!FileExist(cfgPath + cfgMainDir)) MakeDirectory(cfgPath + cfgMainDir);
 			if (!FileExist(cfgPath + cfgClasses)) {
 				MakeDirectory(cfgPath + cfgClasses);
-				SaveExampleJSON(cfgPath + cfgClasses);
+				SaveClassExampleJSON(cfgPath + cfgClasses);
 			}
 			if (!FileExist(cfgPath + cfgPlayerSaves)) MakeDirectory(cfgPath + cfgPlayerSaves);
-			if (!FileExist(cfgPath + "ClassSelection\\ClassDataExample.json")) SaveExampleJSON(cfgPath + "ClassSelection\\");
+			if (!FileExist(cfgPath + "ClassSelection\\ClassDataExample.json")) SaveClassExampleJSON(cfgPath + "ClassSelection\\");
+			if (!FileExist(cfgPath + "ClassSelection\\GeneralItems.json")) SaveItemsExampleJSON(cfgPath + "ClassSelection\\");
 			
 			//Load Existing Classes
 			 m_AvailableClasses = new array<ref JsonClassData>;
+			 m_GerneralItems = new array<ref JsonClassItem>;
+			
+			
+			JsonFileLoader<array<ref JsonClassItem>>.JsonLoadFile(cfgPath + "ClassSelection\\GeneralItems.json", m_GerneralItems);
 			
 			string CurrentClassFileName;
 			FileAttr CurrentClassFileAttr;
@@ -58,7 +64,18 @@ class ClassSelectionClass {
 		}
 	}
 	
-	void SaveExampleJSON(string path) {
+	void SaveItemsExampleJSON(string path) {
+		array<ref JsonClassItem> example = new array<ref JsonClassItem>;
+		
+		example.Insert(new JsonClassItem("Rag", 6, {}, null, {}));
+		example.Insert(new JsonClassItem("TacticalBaconCan", 5, {}, null, {}));
+		example.Insert(new JsonClassItem("WaterBottle", 0, {}, null, {}));
+		example.Insert(new JsonClassItem("HuntingKnife", 0, {}, null, {}));
+		
+		JsonFileLoader<array<ref JsonClassItem>>.JsonSaveFile(path + "GeneralItems.json", example);
+	}
+	
+	void SaveClassExampleJSON(string path) {
 		JsonClassData example = new JsonClassData();
 			
 		example.className = "Assault";
@@ -230,7 +247,7 @@ class ClassSelectionClass {
 		player.GetInventory().CreateInInventory(classData.vest);
 	}
 	
-	ItemBase SpawnItem(ClassItem item, PlayerBase player, bool InHands = false) {
+	ItemBase SpawnItem(ClassItem item, PlayerBase player, bool InHands = false, bool SkipQuantity = false) {
 		ItemBase ent_Item;
 		TStringArray mags =  item.GetMagazines();
 		
@@ -283,15 +300,19 @@ class ClassSelectionClass {
 							weaponBase.PushCartridgeToChamber(i, ammo_damage, ammo_type);
 							has_bullet = true;
 						}
-						
-						if(weaponBase.IsInherited(BoltActionRifle_InnerMagazine_Base)) {
-							animationIndex = 1;
+							
+						if(weaponBase.IsInherited(Repeater_Base)) {
+							animationIndex = 2;
 						}
 						
-						if (weaponBase.IsInherited(BoltActionRifle_InnerMagazine_Base) || weaponBase.IsInherited(DoubleBarrel_Base)) {
+						if (weaponBase.IsInherited(BoltActionRifle_InnerMagazine_Base) || weaponBase.IsInherited(DoubleBarrel_Base) || weaponBase.IsInherited(Repeater_Base)) {
 							has_bullet = false;
 						}
 					}
+				}
+				
+				if(weaponBase.IsInherited(CZ527_Base) || weaponBase.IsInherited(BoltActionRifle_InnerMagazine_Base)) {
+					animationIndex = 1;
 				}
 				
 				weaponBase.UpdateAnimationState(has_bullet, has_mag, animationIndex);
@@ -311,11 +332,26 @@ class ClassSelectionClass {
 			addedAttachment.GetInventory().CreateAttachment("Battery9V");
 		}
 		
-		if(item.GetQuantity() > 0) {
-			ent_Item.SetQuantity(item.GetQuantity());
+		if(!SkipQuantity && item.GetQuantity() > 0) {
+			if(ent_Item.CanBeSplit()) {
+				ent_Item.SetQuantity(item.GetQuantity());
+			}
+			else {
+				for(int q = 0; q < item.GetQuantity() - 1; q++) {
+					SpawnItem(item, player, false, true);
+				}
+			}
 		}	
-	
+		
 		//ToDo: Cargo
+		
+		if(ent_Item.IsFood()) {
+			return Edible_Base.Cast(ent_Item);
+		}
+		
+		if(ent_Item.IsWeapon()) {
+			return Weapon_Base.Cast(ent_Item);
+		}
 		
 		return ent_Item;
 	}
@@ -389,6 +425,10 @@ class ClassSelectionClass {
 					player.SetQuickBarEntityShortcut(SpawnItem(foundSecondary, player), 1);
 					player.SetQuickBarEntityShortcut(SpawnItem(foundUtility, player), 2);
 				}			
+			}
+			
+			foreach(JsonClassItem generalItem: m_GerneralItems) {
+				SpawnItem(ClassItem.LoadFromJSON(generalItem), player);
 			}
 		}
 	}
