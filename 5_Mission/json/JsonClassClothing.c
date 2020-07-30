@@ -4,12 +4,13 @@ class JsonClassClothing {
 	string shoes;
 	string backpack;
 	string vest;
+	string gloves;
+	string belt;
+	string hat;
+	string glasses;
+	string mask;
+	string armband;
 	
-	void JsonClassClothing(string c_top, string c_pants, string c_shoes, string c_backpack, string c_vest) {
-		top = c_top;
-		pants = c_pants;
-		shoes = c_shoes;
-		backpack = c_backpack;
-		vest = c_vest;
-	}
+	ref TStringArray vestAttachments;
+	ref TStringArray backpackAttachments;
 };

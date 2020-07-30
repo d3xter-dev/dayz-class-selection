@@ -194,7 +194,7 @@ class ClassData extends UIScriptedMenu {
 		
 		array<ref ClassClothing> clothings = new array<ref ClassClothing>;
 		foreach(JsonClassClothing jsonC: data.clothes) {
-			clothings.Insert(new ClassClothing(jsonC.top, jsonC.pants, jsonC.shoes, jsonC.backpack, jsonC.vest));
+			clothings.Insert(new ClassClothing(jsonC));
 		}
 		
 		SetPrimaryItems(primaryItems);
