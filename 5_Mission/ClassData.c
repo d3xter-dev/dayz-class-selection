@@ -201,8 +201,6 @@ class ClassData extends UIScriptedMenu {
 		SetSecondaryItems(secondaryItems);
 		SetUtilities(utilities);
 		SetClothes(clothings);
-		
-		Refresh();
 	}
 	
 	JsonClassSelection GetSelection() {

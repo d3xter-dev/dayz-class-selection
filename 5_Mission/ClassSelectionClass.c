@@ -1,8 +1,5 @@
 class ClassSelectionClass {
-	const private string cfgPath = "$profile:";
-	const private string cfgMainDir = "ClassSelection\\";
-	const private string cfgClasses = "ClassSelection\\Classes\\";
-	const private string cfgPlayerSaves = "ClassSelection\\PlayerSaves\\";
+	ref ClassSelectionUtils Utils = new ClassSelectionUtils;
 	
 	ref array<ref JsonClassData> m_AvailableClasses;
 	ref array<ref JsonClassItem> m_GerneralItems;
@@ -13,112 +10,20 @@ class ClassSelectionClass {
 			m_PlayerClasses = new map<string, ref array<ref JsonClassSelection>>;
 			
 			GetRPCManager().AddRPC("ClassSelection", "RequestSyncAvailableClasses", this);
+			GetRPCManager().AddRPC("ClassSelection", "RequestKeyToOpen", this);
 			GetRPCManager().AddRPC("ClassSelection", "SetPlayerClass", this);
+		
+			Utils.CreateDefaultFiles();
 			
-			if (!FileExist(cfgPath + cfgMainDir)) MakeDirectory(cfgPath + cfgMainDir);
-			if (!FileExist(cfgPath + cfgClasses)) {
-				MakeDirectory(cfgPath + cfgClasses);
-				SaveClassExampleJSON(cfgPath + cfgClasses);
-			}
-			if (!FileExist(cfgPath + cfgPlayerSaves)) MakeDirectory(cfgPath + cfgPlayerSaves);
-			if (!FileExist(cfgPath + "ClassSelection\\ClassDataExample.json")) SaveClassExampleJSON(cfgPath + "ClassSelection\\");
-			if (!FileExist(cfgPath + "ClassSelection\\GeneralItems.json")) SaveItemsExampleJSON(cfgPath + "ClassSelection\\");
+			//Load General Items
+			m_GerneralItems = Utils.LoadGeneralItems();
 			
 			//Load Existing Classes
-			 m_AvailableClasses = new array<ref JsonClassData>;
-			 m_GerneralItems = new array<ref JsonClassItem>;
+			m_AvailableClasses = Utils.LoadClasses();
 			
-			
-			JsonFileLoader<array<ref JsonClassItem>>.JsonLoadFile(cfgPath + "ClassSelection\\GeneralItems.json", m_GerneralItems);
-			
-			string CurrentClassFileName;
-			FileAttr CurrentClassFileAttr;
-			
-			FindFileHandle ClassFileHandle = FindFile(cfgPath + cfgClasses + "*.json", CurrentClassFileName, CurrentClassFileAttr, FindFileFlags.DIRECTORIES);
-			if(CurrentClassFileName) {
-
-				LoadClassJSON(CurrentClassFileName);
-				
-				while(FindNextFile(ClassFileHandle, CurrentClassFileName, CurrentClassFileAttr)) {
-					LoadClassJSON(CurrentClassFileName);
-				}
-			}
-			
-			if(m_AvailableClasses.Count() == 0) {
-				string error = "No valid Classes for Class Selection Loaded, maybe invalid JSON? Try to check with online tools.";
-				Print(error); 
-				Debug.LogError(error);
-				Error(error);
-				GetGame().RequestExit(IDC_MAIN_QUIT);
-			}
-
+			//Check Config and Version
+			Utils.CheckVersion();
 		}
-	}
-	
-	void LoadClassJSON(string ClassName) {
-		ref JsonClassData loadedClass = new JsonClassData();
-	    JsonFileLoader<JsonClassData>.JsonLoadFile(cfgPath + cfgClasses + ClassName, loadedClass);
-		
-		if(loadedClass.className) {
-			m_AvailableClasses.Insert(loadedClass);
-		}
-	}
-	
-	void SaveItemsExampleJSON(string path) {
-		array<ref JsonClassItem> example = new array<ref JsonClassItem>;
-		
-		example.Insert(new JsonClassItem("Rag", 6, {}, null, {}));
-		example.Insert(new JsonClassItem("TacticalBaconCan", 5, {}, null, {}));
-		example.Insert(new JsonClassItem("WaterBottle", 0, {}, null, {}));
-		example.Insert(new JsonClassItem("HuntingKnife", 0, {}, null, {}));
-		
-		JsonFileLoader<array<ref JsonClassItem>>.JsonSaveFile(path + "GeneralItems.json", example);
-	}
-	
-	void SaveClassExampleJSON(string path) {
-		JsonClassData example = new JsonClassData();
-			
-		example.className = "Assault";
-		example.primaryItems = {
-			 new JsonClassItem("M4A1", 0, {"M4_RISHndgrd_Black", "M4_MPBttstck_Black", "ACOGOptic"}, null, {new JsonClassMagazine("Mag_STANAG_30Rnd", 5)}),
-			 new JsonClassItem("Mosin9130", 0, {}, null, {new JsonClassMagazine("Ammo_762x54", 5)}),
-			 new JsonClassItem("Izh43Shotgun", 0, {}, null, {new JsonClassMagazine("Ammo_12gaPellets", 5)})
-		};
-		example.secondaryItems = {
-			 new JsonClassItem("MakarovIJ70", 0, {"MakarovPBSuppressor"}, null, {new JsonClassMagazine("MAG_IJ70_8RND", 5)})
-		};
-		example.utilities = {
-			 new JsonClassItem("LandMineTrap")
-		};
-		
-		JsonClassClothing clothing  = new JsonClassClothing();
-		clothing.top = "M65Jacket_Black";
-		clothing.pants = "GorkaPants_PautRev";
-		clothing.shoes = "MilitaryBoots_Redpunk";
-		clothing.backpack = "TortillaBag";
-		clothing.vest = "PlateCarrierVest";
-		clothing.gloves = "TacticalGloves_Black";
-		clothing.belt = "Belt";
-		clothing.hat = "BallisticHelmet_UN";
-		clothing.glasses = "AviatorGlasses";
-		clothing.mask = "GasMask";
-		clothing.armband = "Armband_Pink";
-		clothing.vestAttachments = {
-			"PlateCarrierHolster",
-			"PlateCarrierPouches",
-			"M67Grenade",
-			"M67Grenade",
-			"M67Grenade",
-		};
-		clothing.backpackAttachments = {
-			"Chemlight_Blue"
-		};
-		
-		example.clothes = {
-			clothing
-		};
-		
-		JsonFileLoader<JsonClassData>.JsonSaveFile(path + "ClassDataExample.json", example);
 	}
 	
 	void RequestSyncAvailableClasses(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {
@@ -128,10 +33,19 @@ class ClassSelectionClass {
 		}
 	}
 	
+	void RequestKeyToOpen(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {
+		if( type == CallType.Server )
+	    {
+			GetRPCManager().SendRPC("ClassSelection", "SyncKeyToOpen", new Param1<int>(Utils.StringToKeyCode(Utils.config.keyToOpen)), true, sender);
+		}
+	}
+	
 	void SendSyncAvailableClasses(PlayerIdentity player) {
 		ref array<ref JsonClassData> CustomClasses =  new array<ref JsonClassData>;
 		
 		foreach(JsonClassData copyClass: m_AvailableClasses) {
+			if(!PlayerCanAccessClass(copyClass.className, player)) continue;
+			
 			ref JsonClassData newClass = new JsonClassData();
 			newClass.className = copyClass.className;
 			newClass.primaryItems = copyClass.primaryItems;
@@ -188,74 +102,75 @@ class ClassSelectionClass {
 		GetRPCManager().SendRPC("ClassSelection", "SyncAvailableClasses", new Param1<ref array<ref JsonClassData>>(CustomClasses), true, player);
 	}
 	
+	void LoadPlayerData(PlayerIdentity identity) {
+		m_PlayerClasses.Set(identity.GetId(), Utils.LoadPlayerData(identity));
+	}
+	
+	bool PlayerCanAccessClass(string className, PlayerIdentity identity) {
+		foreach(string name, ref TStringArray players: Utils.config.whiteList) {
+			if(name == className) {
+				players = Utils.config.whiteList.Get(name);
+				if(players.Find(identity.GetId()) > -1) {
+					return true;
+				}
+				
+				return false;
+			}
+		}
+		
+		return true;
+	}
+	
 	void SetPlayerClass(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {
 		Param1<JsonClassSelection> params;
 	    if ( !ctx.Read( params ) ) return;
 		
 	    if( type == CallType.Server )
 	    {
-			PlayerBase player = GetPlayerById(sender.GetPlayerId());
+			PlayerBase player = Utils.GetPlayerById(sender.GetPlayerId());
 			
 			//Update Players Custom Classes
 			ref JsonClassSelection selectedClass = params.param1;
 			selectedClass.selected = true;
 			
-			if(!m_PlayerClasses.Contains(sender.GetId())) {
-				m_PlayerClasses.Set(sender.GetId(), new ref array<ref JsonClassSelection>);
-			}
-			
-			if(m_PlayerClasses.Contains(sender.GetId())) {
-				ref array<ref JsonClassSelection> playerClasses = m_PlayerClasses.Get(sender.GetId());
+			if(PlayerCanAccessClass(selectedClass.className, sender)) {
+				if(!m_PlayerClasses.Contains(sender.GetId())) {
+					m_PlayerClasses.Set(sender.GetId(), new ref array<ref JsonClassSelection>);
+				}
 				
-				
-				bool exists = false;
-				foreach(int classIndex, JsonClassSelection playerClass: playerClasses) {
-					if(playerClass) {
-						playerClass.selected = false;
-						playerClasses.Remove(classIndex);
-						
-						if(selectedClass.className == playerClass.className) {
-							exists  = true;
-							playerClasses.InsertAt(selectedClass, classIndex);
-						}
-						else {
-							playerClasses.InsertAt(playerClass, classIndex);
+				if(m_PlayerClasses.Contains(sender.GetId())) {
+					ref array<ref JsonClassSelection> playerClasses = m_PlayerClasses.Get(sender.GetId());
+					
+					
+					bool exists = false;
+					foreach(int classIndex, JsonClassSelection playerClass: playerClasses) {
+						if(playerClass) {
+							playerClass.selected = false;
+							playerClasses.Remove(classIndex);
+							
+							if(selectedClass.className == playerClass.className) {
+								exists  = true;
+								playerClasses.InsertAt(selectedClass, classIndex);
+							}
+							else {
+								playerClasses.InsertAt(playerClass, classIndex);
+							}
 						}
 					}
+	
+					if(!exists) playerClasses.Insert(selectedClass);
+					
+					m_PlayerClasses.Set(sender.GetId(), playerClasses);
 				}
-
-				if(!exists) playerClasses.Insert(selectedClass);
-				
-				m_PlayerClasses.Set(sender.GetId(), playerClasses);
 			}
-			
 			SendSyncAvailableClasses(sender);
 			
-			//Save Classes
-			JsonFileLoader<array<ref JsonClassSelection>>.JsonSaveFile(cfgPath + cfgPlayerSaves + sender.GetId() + ".json", m_PlayerClasses.Get(sender.GetId()));
+			//Save ClassSelectionUtils
+			Utils.SavePlayerClasses(m_PlayerClasses.Get(sender.GetId()), sender.GetId());
 			
 			//Force Respawn
 			player.SetHealth(0);
 	    }
-	}
-	
-	PlayerBase GetPlayerById (int plyId) {
-		array<Man> players = new array<Man>;
-		PlayerBase result = NULL;
-	
-		if (GetGame().IsMultiplayer()) {
-			GetGame().GetPlayers(players);
-	
-			for (int i = 0; i < players.Count(); i++) {
-				if (players.Get(i).GetIdentity().GetPlayerId() == plyId) {
-					result = PlayerBase.Cast(players.Get(i));
-				}
-			}
-		} else {
-			result = PlayerBase.Cast(GetGame().GetPlayer());
-		}
-	
-		return result;
 	}
 	
 		
@@ -418,12 +333,6 @@ class ClassSelectionClass {
 		return null;
 	}
 	
-	void LoadPlayerData(PlayerIdentity identity) {
-		ref array<ref JsonClassSelection> playerClasses = new array<ref JsonClassSelection>;
-	    JsonFileLoader<array<ref JsonClassSelection>>.JsonLoadFile(cfgPath + cfgPlayerSaves + identity.GetId() + ".json", playerClasses);
-		m_PlayerClasses.Set(identity.GetId(), playerClasses);
-	}
-	
 	void CheckClassItem(array<ref JsonClassItem> baseItems, JsonClassItem selectedItem, out ClassItem foundItem) {
 		foreach(JsonClassItem baseItem: baseItems){
 			if(baseItem.name == selectedItem.name) {
@@ -464,7 +373,7 @@ class ClassSelectionClass {
 			
 			if(!selectedClass) selectedClass = playerClasses.Get(0);
 			
-			if(selectedClass) {
+			if(selectedClass && PlayerCanAccessClass(selectedClass.className, player.GetIdentity())) {
 				//Check if Class has Weapons and attachments available
 				ref JsonClassData foundClass;
 				ref ClassItem foundPrimary; 

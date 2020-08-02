@@ -2,7 +2,7 @@ FrameWidgetClass rootFrame {
  visible 0
  clipchildren 1
  inheritalpha 0
- size 1205.56995 753.47406
+ size 1260 775
  halign center_ref
  valign center_ref
  hexactpos 0
@@ -26,20 +26,51 @@ FrameWidgetClass rootFrame {
    scaled 1
    style rover_sim_colorable
    {
+    PanelWidgetClass HeadingBackground {
+     inheritalpha 0
+     ignorepointer 1
+     color 0.2 0.2 0.2 1
+     position 0 0
+     size 1 80
+     hexactpos 1
+     vexactpos 1
+     hexactsize 0
+     vexactsize 1
+     style rover_sim_colorable
+     {
+      PanelWidgetClass BorderBottom {
+       inheritalpha 1
+       ignorepointer 1
+       color 1 1 1 0.1961
+       size 1 1
+       halign center_ref
+       valign bottom_ref
+       hexactpos 1
+       vexactpos 1
+       hexactsize 0
+       vexactsize 1
+       style rover_sim_colorable
+      }
+     }
+    }
     TextWidgetClass Heading {
      ignorepointer 1
-     position 0 40
-     size 1 48
+     position 0 17
+     size 1 45
      halign center_ref
      hexactpos 0
      vexactpos 1
      hexactsize 0
      vexactsize 1
-     text "Select your class & weapons!"
+     text "Choose a class and items!"
+     "exact text" 0
+     "size to text h" 0
+     "size to text v" 0
      "text halign" center
+     "text valign" center
     }
     ButtonWidgetClass SelectButton {
-     position 0 45
+     position 0 35
      size 540.323 48
      halign center_ref
      valign bottom_ref
@@ -51,6 +82,33 @@ FrameWidgetClass rootFrame {
      text "CONFIRM CLASS"
      text_offset 0 1.5
      text_proportion 0.5
+    }
+    ButtonWidgetClass ClassesPrev {
+     position 0.023 0
+     size 0.03 1
+     valign center_ref
+     hexactpos 0
+     vexactpos 1
+     hexactsize 0
+     vexactsize 0
+     scaled 1
+     style Empty
+     text "<"
+     text_proportion 0.3
+    }
+    ButtonWidgetClass ClassesNext {
+     position 0.023 0
+     size 0.03 1
+     halign right_ref
+     valign center_ref
+     hexactpos 0
+     vexactpos 1
+     hexactsize 0
+     vexactsize 0
+     scaled 1
+     style Empty
+     text ">"
+     text_proportion 0.3
     }
    }
   }

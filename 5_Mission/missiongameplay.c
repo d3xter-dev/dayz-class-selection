@@ -2,16 +2,18 @@ modded class MissionGameplay {
 	
 	ref ClassMenu m_ClassMenu;
 	ref array<ref JsonClassData> m_AvailableClasses;
+	int m_KeyToOpen = KeyCode.KC_COMMA;
 
 	void MissionGameplay()
 	{
+		GetRPCManager().SendRPC("ClassSelection", "RequestKeyToOpen", null, true);
 		GetRPCManager().AddRPC("ClassSelection", "SyncAvailableClasses", this, SingeplayerExecutionType.Client);
+		GetRPCManager().AddRPC("ClassSelection", "SyncKeyToOpen", this, SingeplayerExecutionType.Client);
 	}
 	
 	override void OnKeyPress( int key ) { 
-		super.OnKeyPress( key );
 		switch ( key ) {
-			case KeyCode.KC_COMMA:
+			case m_KeyToOpen:
 				GetClassMenu().Toggle();
 			break;
 			default:
@@ -42,6 +44,18 @@ modded class MissionGameplay {
 	    {
 	        Print( "ClassSelection - Sync Classes!" );
 	        m_AvailableClasses = classes.param1;
+	    }
+	}
+	
+	void SyncKeyToOpen(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
+	{
+	    Param1<int> KeyToOpen;
+	    if ( !ctx.Read( KeyToOpen ) ) return;
+		
+	    if( type == CallType.Client )
+	    {
+	        Print( "ClassSelection - Sync Key!" );
+	        m_KeyToOpen = KeyToOpen.param1;
 	    }
 	}
 	

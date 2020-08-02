@@ -2,10 +2,14 @@ class ClassMenu extends UIScriptedMenu {
 
 	private ref Widget m_currentClass;
 	private ref array<ref JsonClassData> m_AvailableClasses;
+	private ref array<ref Widget> m_DrawnWigets;
+	private int m_currentClassIndex = 1;
+	private int m_classesToShow = 3;
 	bool selectedClass = false;
 	
 	void ClassMenu(){
 		m_AvailableClasses = new ref array<ref JsonClassData>;
+		m_DrawnWigets = new ref array<ref Widget>;
 	}
 	
 	void SetAvailableClasses(ref array<ref JsonClassData> classes){
@@ -22,34 +26,72 @@ class ClassMenu extends UIScriptedMenu {
 			super.OnShow();
 			GetGame().GetInput().ChangeGameFocus( 1 );
 		
-			ClassData classData = null;
-			
-			float containerW, containerH, frameW, frameH;
-			GetLayoutRoot().GetSize(containerW, containerH);
-				
-			float startX = 80;
-			float startY = containerH * 0.14;
-			
+			int index = 0;
 			foreach(JsonClassData jsonClassData: m_AvailableClasses) {
-				ref Widget classFrame  = GetGame().GetWorkspace().CreateWidgets( "d3xters-class-selection\\Scripts\\5_Mission\\layouts\\class.layout", layoutRoot);
-				
-				classFrame.GetScript(classData);
-				classFrame.SetPos(startX, startY);
-				layoutRoot.AddChild(classFrame);
-				classFrame.GetSize(frameW, frameH);
-				
-				classData.layoutRoot = classFrame;
+				ClassData classData = new ClassData();
 				classData.LoadFromJSON(jsonClassData);
 				
 				if(classData.selected) {
-					m_currentClass = classFrame;
-				}
-			
-				startX += (containerW - 160 - (frameW * 3)) / 2 + frameW ;
+					m_currentClassIndex = index;
+				}			
+				index++;
 			}
 			
-			ChangeCurrentClass(m_currentClass);
+			DrawClasses();
 		}
+	}
+	
+	private void DrawClass(int index, int position = 0) {
+		float containerW, containerH, frameW, frameH;
+		GetLayoutRoot().GetSize(containerW, containerH);
+		
+		float startX = 80;
+		float startY = containerH * 0.16;
+		
+		ClassData classData = null;
+		ref Widget classFrame  = GetGame().GetWorkspace().CreateWidgets( "d3xters-class-selection\\Scripts\\5_Mission\\layouts\\class.layout", layoutRoot);
+		classFrame.GetScript(classData);
+		classFrame.GetSize(frameW, frameH);
+	
+		if(position > 0) {
+			startX += ((containerW - 160 - (frameW * 3)) / 2 + frameW) * position;
+		}
+		classFrame.SetPos(startX, startY);
+			
+		layoutRoot.AddChild(classFrame);
+		
+		classData.layoutRoot = classFrame;
+		classData.LoadFromJSON(m_AvailableClasses.Get(index));
+		classData.Refresh();
+		
+		if(classData.selected) {
+			m_currentClass = classFrame;
+		}
+		
+		m_DrawnWigets.Insert(classFrame);
+	}
+	
+	private void DrawClasses() {
+		foreach(Widget drawnWidget: m_DrawnWigets) {
+			drawnWidget.Unlink();
+		}
+		m_DrawnWigets.Clear();
+		
+		int firstItem = m_currentClassIndex - 1; 
+		int lastItem = m_currentClassIndex + 1;
+		
+		if(m_currentClassIndex == 0) {
+			 firstItem = m_AvailableClasses.Count() - 1;
+		}
+		if(m_currentClassIndex == (m_AvailableClasses.Count() - 1)) {
+			lastItem = 0;
+		}
+		
+		DrawClass(firstItem, 0);
+		DrawClass(m_currentClassIndex, 1);
+		DrawClass(lastItem, 2);
+
+		ChangeCurrentClass(m_currentClass);	
 	}
 	
 	override void OnHide() {
@@ -94,6 +136,16 @@ class ClassMenu extends UIScriptedMenu {
 			break;
 			case "SelectButton":
 				SelectClass();
+			break;
+			case "ClassesPrev":
+				m_currentClassIndex--;
+				if(m_currentClassIndex < 0) m_currentClassIndex = m_AvailableClasses.Count() - 1;
+				DrawClasses();
+			break;
+			case "ClassesNext":
+				m_currentClassIndex++;
+				if(m_currentClassIndex > (m_AvailableClasses.Count() - 1)) m_currentClassIndex = 0;
+				DrawClasses();
 			break;
 		}
 		
