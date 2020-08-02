@@ -32,13 +32,22 @@ class ClassMenu extends UIScriptedMenu {
 				classData.LoadFromJSON(jsonClassData);
 				
 				if(classData.selected) {
-					m_currentClassIndex = index;
+					m_currentClassIndex = Math.Round(index / m_classesToShow);
 				}			
 				index++;
 			}
 			
 			DrawClasses();
 		}
+	}
+	
+	private int GetPages() {
+		if(m_AvailableClasses.Count() <= m_classesToShow) return 1;
+		return (Math.Round(m_AvailableClasses.Count() / m_classesToShow) + 1);
+	}
+	
+	private int GetCurrentPage() {
+		return (Math.Round(m_currentClassIndex / m_classesToShow) + 1);
 	}
 	
 	private void DrawClass(int index, int position = 0) {
@@ -87,11 +96,18 @@ class ClassMenu extends UIScriptedMenu {
 			lastItem = 0;
 		}
 		
-		DrawClass(firstItem, 0);
-		DrawClass(m_currentClassIndex, 1);
-		DrawClass(lastItem, 2);
+		if(m_AvailableClasses.Get(m_currentClassIndex)) DrawClass(m_currentClassIndex, 1);
+		else {
+			DrawClass(firstItem, 1);
+			firstItem = -1;
+		}
+		
+		if(m_AvailableClasses.Get(firstItem) && firstItem != m_currentClassIndex) DrawClass(firstItem, 0);
+		if(m_AvailableClasses.Get(lastItem) && lastItem != m_currentClassIndex && lastItem != firstItem) DrawClass(lastItem, 2);
 
-		ChangeCurrentClass(m_currentClass);	
+		ChangeCurrentClass(m_currentClass);
+		TextWidget PageNumber = GetLayoutRoot().FindAnyWidget("PageNumber");
+		PageNumber.SetText("Page: " +  GetCurrentPage() + "/" + GetPages());	
 	}
 	
 	override void OnHide() {
@@ -138,13 +154,15 @@ class ClassMenu extends UIScriptedMenu {
 				SelectClass();
 			break;
 			case "ClassesPrev":
-				m_currentClassIndex--;
-				if(m_currentClassIndex < 0) m_currentClassIndex = m_AvailableClasses.Count() - 1;
+				m_currentClassIndex -= m_classesToShow;
+				if(m_currentClassIndex < 0) m_currentClassIndex = ((GetPages() - 1) * m_classesToShow) + 1;
 				DrawClasses();
 			break;
 			case "ClassesNext":
-				m_currentClassIndex++;
-				if(m_currentClassIndex > (m_AvailableClasses.Count() - 1)) m_currentClassIndex = 0;
+				m_currentClassIndex += m_classesToShow;
+				if(GetCurrentPage() > GetPages()){
+					m_currentClassIndex = m_classesToShow - 2;
+				} 
 				DrawClasses();
 			break;
 		}

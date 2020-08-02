@@ -12,6 +12,7 @@ FrameWidgetClass rootFrame {
  scriptclass "ClassMenu"
  {
   PanelWidgetClass BackgroundPanel {
+   visible 1
    clipchildren 1
    inheritalpha 1
    ignorepointer 1
@@ -109,6 +110,17 @@ FrameWidgetClass rootFrame {
      style Empty
      text ">"
      text_proportion 0.3
+    }
+    TextWidgetClass PageNumber {
+     ignorepointer 1
+     position 80 45
+     size 250 25
+     valign bottom_ref
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text "Page: 0 / 0"
     }
    }
   }
