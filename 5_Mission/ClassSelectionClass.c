@@ -188,6 +188,7 @@ class ClassSelectionClass {
 		player.GetInventory().CreateInInventory(classData.mask);
 		player.GetInventory().CreateInInventory(classData.armband);
 		player.GetInventory().CreateInInventory(classData.hat);
+		player.GetInventory().CreateInInventory(classData.belt);
 		
 		ItemBase vest = ItemBase.Cast(player.GetInventory().CreateInInventory(classData.vest));
 		ItemBase backpack = ItemBase.Cast(player.GetInventory().CreateInInventory(classData.backpack));
@@ -225,111 +226,113 @@ class ClassSelectionClass {
 				}
 			}
 			
-			if(mags && mags.Count()) {
-				Weapon_Base weaponBase = Weapon_Base.Cast(ent_Item);
-				
-				if(weaponBase) {
-					Magazine newMag;
-					foreach(string mag: mags) {
-						newMag = null;
-						if(vest) {
-							newMag = Magazine.Cast(vest.GetInventory().CreateInInventory(mag));
+			if(ent_Item) {
+				if(mags && mags.Count()) {
+					Weapon_Base weaponBase = Weapon_Base.Cast(ent_Item);
+					
+					if(weaponBase) {
+						Magazine newMag;
+						foreach(string mag: mags) {
+							newMag = null;
+							if(vest) {
+								newMag = Magazine.Cast(vest.GetInventory().CreateInInventory(mag));
+							}
+							
+							if(!newMag) {
+								newMag = Magazine.Cast(player.GetInventory().CreateInInventory(mag));
+							}
 						}
 						
-						if(!newMag) {
-							newMag = Magazine.Cast(player.GetInventory().CreateInInventory(mag));
+						if(GetGame().IsMultiplayer())
+				        {
+				            GetGame().RemoteObjectDelete(weaponBase);
+				            GetGame().RemoteObjectDelete(newMag);
+				        }			
+				
+						int mi = weaponBase.GetCurrentMuzzle();
+						bool has_mag = false;
+						bool has_bullet = false;
+						int animationIndex = 0;
+				
+						//Attach Mag if possible
+						if(newMag && weaponBase.CanAttachMagazine(mi, newMag)) {
+							weaponBase.AttachMagazine(mi, newMag);
+							pushToChamberFromAttachedMagazine(weaponBase, mi);
+							has_bullet = true;
+							has_mag = true;
 						}
-					}
-					
-					if(GetGame().IsMultiplayer())
-			        {
-			            GetGame().RemoteObjectDelete(weaponBase);
-			            GetGame().RemoteObjectDelete(newMag);
-			        }			
-			
-					int mi = weaponBase.GetCurrentMuzzle();
-					bool has_mag = false;
-					bool has_bullet = false;
-					int animationIndex = 0;
-			
-					//Attach Mag if possible
-					if(newMag && weaponBase.CanAttachMagazine(mi, newMag)) {
-						weaponBase.AttachMagazine(mi, newMag);
-						pushToChamberFromAttachedMagazine(weaponBase, mi);
-						has_bullet = true;
-						has_mag = true;
-					}
-					else {
-						float ammo_damage;
-						string ammo_type;
-							
-						if(newMag && newMag.LocalAcquireCartridge(ammo_damage, ammo_type)){
-							if(weaponBase.GetInternalMagazineMaxCartridgeCount(mi)) {
-								while(!weaponBase.IsInternalMagazineFull(mi)) {
-									weaponBase.PushCartridgeToInternalMagazine(mi, ammo_damage, ammo_type);
+						else {
+							float ammo_damage;
+							string ammo_type;
+								
+							if(newMag && newMag.LocalAcquireCartridge(ammo_damage, ammo_type)){
+								if(weaponBase.GetInternalMagazineMaxCartridgeCount(mi)) {
+									while(!weaponBase.IsInternalMagazineFull(mi)) {
+										weaponBase.PushCartridgeToInternalMagazine(mi, ammo_damage, ammo_type);
+									}
+								}
+								
+								for(int i = 0; i < weaponBase.GetMuzzleCount(); i++) {
+									weaponBase.PushCartridgeToChamber(i, ammo_damage, ammo_type);
+									has_bullet = true;
+								}
+									
+								if(weaponBase.IsInherited(Repeater_Base)) {
+									animationIndex = 2;
+								}
+								
+								if (weaponBase.IsInherited(BoltActionRifle_InnerMagazine_Base) || weaponBase.IsInherited(DoubleBarrel_Base) || weaponBase.IsInherited(Repeater_Base)) {
+									has_bullet = false;
 								}
 							}
-							
-							for(int i = 0; i < weaponBase.GetMuzzleCount(); i++) {
-								weaponBase.PushCartridgeToChamber(i, ammo_damage, ammo_type);
-								has_bullet = true;
-							}
-								
-							if(weaponBase.IsInherited(Repeater_Base)) {
-								animationIndex = 2;
-							}
-							
-							if (weaponBase.IsInherited(BoltActionRifle_InnerMagazine_Base) || weaponBase.IsInherited(DoubleBarrel_Base) || weaponBase.IsInherited(Repeater_Base)) {
-								has_bullet = false;
-							}
+						}
+						
+						if(weaponBase.IsInherited(CZ527_Base) || weaponBase.IsInherited(BoltActionRifle_InnerMagazine_Base)) {
+							animationIndex = 1;
+						}
+						
+						weaponBase.UpdateAnimationState(has_bullet, has_mag, animationIndex);
+				
+						if(GetGame().IsMultiplayer())
+				        {
+				            GetGame().RemoteObjectCreate(weaponBase);
+				            GetGame().RemoteObjectCreate(newMag);
+				        }
+					}
+				}
+				
+				
+				TStringArray attachments =  item.GetAttachments();
+				foreach(string attachment: attachments) {
+					EntityAI addedAttachment = ent_Item.GetInventory().CreateAttachment(attachment);
+					if(addedAttachment) addedAttachment.GetInventory().CreateAttachment("Battery9V");
+				}
+				
+				if(!SkipQuantity && item.GetQuantity() > 0) {
+					if(ent_Item.CanBeSplit()) {
+						ent_Item.SetQuantity(item.GetQuantity());
+					}
+					else {
+						for(int q = 0; q < item.GetQuantity() - 1; q++) {
+							SpawnItem(item, player, false, true);
 						}
 					}
-					
-					if(weaponBase.IsInherited(CZ527_Base) || weaponBase.IsInherited(BoltActionRifle_InnerMagazine_Base)) {
-						animationIndex = 1;
-					}
-					
-					weaponBase.UpdateAnimationState(has_bullet, has_mag, animationIndex);
-			
-					if(GetGame().IsMultiplayer())
-			        {
-			            GetGame().RemoteObjectCreate(weaponBase);
-			            GetGame().RemoteObjectCreate(newMag);
-			        }
+				}	
+				
+				//ToDo: Cargo
+				
+				if(ent_Item.IsFood()) {
+					return Edible_Base.Cast(ent_Item);
 				}
-			}
-			
-			
-			TStringArray attachments =  item.GetAttachments();
-			foreach(string attachment: attachments) {
-				EntityAI addedAttachment = ent_Item.GetInventory().CreateAttachment(attachment);
-				addedAttachment.GetInventory().CreateAttachment("Battery9V");
-			}
-			
-			if(!SkipQuantity && item.GetQuantity() > 0) {
-				if(ent_Item.CanBeSplit()) {
-					ent_Item.SetQuantity(item.GetQuantity());
+				
+				if(ent_Item.IsWeapon()) {
+					return Weapon_Base.Cast(ent_Item);
 				}
-				else {
-					for(int q = 0; q < item.GetQuantity() - 1; q++) {
-						SpawnItem(item, player, false, true);
-					}
-				}
-			}	
-			
-			//ToDo: Cargo
-			
-			if(ent_Item.IsFood()) {
-				return Edible_Base.Cast(ent_Item);
+				
+				return ent_Item;
 			}
-			
-			if(ent_Item.IsWeapon()) {
-				return Weapon_Base.Cast(ent_Item);
-			}
-			
-			return ent_Item;
 		}
-		
+			
 		return null;
 	}
 	

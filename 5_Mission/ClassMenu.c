@@ -5,6 +5,7 @@ class ClassMenu extends UIScriptedMenu {
 	private ref array<ref Widget> m_DrawnWigets;
 	private int m_currentClassIndex = 1;
 	private int m_classesToShow = 3;
+	private int m_currentPage = 1;
 	bool selectedClass = false;
 	
 	void ClassMenu(){
@@ -25,15 +26,27 @@ class ClassMenu extends UIScriptedMenu {
 		if(m_AvailableClasses && m_AvailableClasses.Count()) {
 			super.OnShow();
 			GetGame().GetInput().ChangeGameFocus( 1 );
-		
+			
 			int index = 0;
+			int count = 0;
+			int page = 1;
+			
 			foreach(JsonClassData jsonClassData: m_AvailableClasses) {
+				count++;
+				
 				ClassData classData = new ClassData();
 				classData.LoadFromJSON(jsonClassData);
 				
 				if(classData.selected) {
-					m_currentClassIndex = Math.Round(index / m_classesToShow);
-				}			
+					m_currentClassIndex = index;
+					m_currentPage = page;
+				}	
+				
+				if(count == 3) {
+					page++;
+					count = 0;
+				}
+						
 				index++;
 			}
 			
@@ -43,11 +56,11 @@ class ClassMenu extends UIScriptedMenu {
 	
 	private int GetPages() {
 		if(m_AvailableClasses.Count() <= m_classesToShow) return 1;
-		return (Math.Round(m_AvailableClasses.Count() / m_classesToShow) + 1);
+		return (Math.Ceil(m_AvailableClasses.Count() / m_classesToShow);
 	}
 	
 	private int GetCurrentPage() {
-		return (Math.Round(m_currentClassIndex / m_classesToShow) + 1);
+		return m_currentPage;
 	}
 	
 	private void DrawClass(int index, int position = 0) {
@@ -86,24 +99,13 @@ class ClassMenu extends UIScriptedMenu {
 		}
 		m_DrawnWigets.Clear();
 		
-		int firstItem = m_currentClassIndex - 1; 
-		int lastItem = m_currentClassIndex + 1;
-		
-		if(m_currentClassIndex == 0) {
-			 firstItem = m_AvailableClasses.Count() - 1;
-		}
-		if(m_currentClassIndex == (m_AvailableClasses.Count() - 1)) {
-			lastItem = 0;
-		}
-		
-		if(m_AvailableClasses.Get(m_currentClassIndex)) DrawClass(m_currentClassIndex, 1);
-		else {
-			DrawClass(firstItem, 1);
-			firstItem = -1;
-		}
-		
-		if(m_AvailableClasses.Get(firstItem) && firstItem != m_currentClassIndex) DrawClass(firstItem, 0);
-		if(m_AvailableClasses.Get(lastItem) && lastItem != m_currentClassIndex && lastItem != firstItem) DrawClass(lastItem, 2);
+		int firstItem = (GetCurrentPage() * m_classesToShow) - 3; 
+		int middleItem = (GetCurrentPage() * m_classesToShow) - 2;
+		int lastItem = GetCurrentPage() * m_classesToShow - 1;
+
+		if(m_AvailableClasses.Get(firstItem)) DrawClass(firstItem, 0);
+		if(m_AvailableClasses.Get(middleItem)) DrawClass(middleItem, 1);
+		if(m_AvailableClasses.Get(lastItem)) DrawClass(lastItem, 2);
 
 		ChangeCurrentClass(m_currentClass);
 		TextWidget PageNumber = GetLayoutRoot().FindAnyWidget("PageNumber");
@@ -154,14 +156,14 @@ class ClassMenu extends UIScriptedMenu {
 				SelectClass();
 			break;
 			case "ClassesPrev":
-				m_currentClassIndex -= m_classesToShow;
-				if(m_currentClassIndex < 0) m_currentClassIndex = ((GetPages() - 1) * m_classesToShow) + 1;
+				m_currentPage--;
+				if(m_currentPage <= 0) m_currentPage = GetPages();
 				DrawClasses();
 			break;
 			case "ClassesNext":
-				m_currentClassIndex += m_classesToShow;
+				m_currentPage++;
 				if(GetCurrentPage() > GetPages()){
-					m_currentClassIndex = m_classesToShow - 2;
+					m_currentPage = 1;
 				} 
 				DrawClasses();
 			break;
