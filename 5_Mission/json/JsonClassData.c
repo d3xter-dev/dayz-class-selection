@@ -8,5 +8,6 @@ class JsonClassData {
 	ref JsonClassItemArray primaryItems;
 	ref JsonClassItemArray secondaryItems;
 	ref JsonClassItemArray utilities;
+	ref JsonClassItemArray generalItems;
 	ref JsonClassClothingArray clothes;
 };

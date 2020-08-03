@@ -13,4 +13,5 @@ class JsonClassClothing {
 	
 	ref TStringArray vestAttachments;
 	ref TStringArray backpackAttachments;
+	ref TStringArray beltAttachments;
 };

@@ -30,7 +30,6 @@ modded class MissionServer
 			
 				identity = clientPrepareParams.param1;
 				if(identity) {
-					GetClassSelection().Utils.RefreshConfig(); //Refresh WhiteList
 					GetClassSelection().LoadPlayerData(identity);
 				}
 			break;
@@ -46,7 +45,6 @@ modded class MissionServer
 					return;
 				}
 			
-				GetClassSelection().Utils.RefreshConfig();
 				GetClassSelection().SendSyncAvailableClasses(identity);
 			break;
 		}

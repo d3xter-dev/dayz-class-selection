@@ -4,6 +4,7 @@ class ClassData extends UIScriptedMenu {
 	protected ref array<ref ClassItem> PrimaryItems;
 	protected ref array<ref ClassItem> SecondaryItems;
 	protected ref array<ref ClassItem> Utilities;
+	protected ref array<ref ClassItem> GeneralItems;
 	protected ref array<ref ClassClothing> Clothes;
 
 	protected ClassItem CurrentPrimary;
@@ -20,6 +21,7 @@ class ClassData extends UIScriptedMenu {
 		PrimaryItems = new array<ref ClassItem>;
 		SecondaryItems = new array<ref ClassItem>;
 		Utilities = new array<ref ClassItem>;
+		GeneralItems = new array<ref ClassItem>;
 		Clothes = new array<ref ClassClothing>;
 	}
 	
@@ -50,6 +52,13 @@ class ClassData extends UIScriptedMenu {
 		Utilities.Clear();
 		foreach(ClassItem item: items) {
 			Utilities.Insert(item);
+		}
+	}
+		
+	void SetGeneralItems(array<ref ClassItem> items) {
+		GeneralItems.Clear();
+		foreach(ClassItem item: items) {
+			GeneralItems.Insert(item);
 		}
 	}
 		
@@ -192,6 +201,12 @@ class ClassData extends UIScriptedMenu {
 			}
 		}
 		
+		array<ref ClassItem> generalItems = new array<ref ClassItem>;
+		foreach(JsonClassItem jsonG: data.utilities) {
+			newItem = ClassItem.LoadFromJSON(jsonG);
+			generalItems.Insert(newItem);
+		}
+		
 		array<ref ClassClothing> clothings = new array<ref ClassClothing>;
 		foreach(JsonClassClothing jsonC: data.clothes) {
 			clothings.Insert(new ClassClothing(jsonC));
@@ -200,6 +215,7 @@ class ClassData extends UIScriptedMenu {
 		SetPrimaryItems(primaryItems);
 		SetSecondaryItems(secondaryItems);
 		SetUtilities(utilities);
+		SetGeneralItems(generalItems);
 		SetClothes(clothings);
 	}
 	

@@ -108,7 +108,7 @@ class ClassMenu extends UIScriptedMenu {
 		if(m_AvailableClasses.Get(lastItem)) DrawClass(lastItem, 2);
 
 		ChangeCurrentClass(m_currentClass);
-		TextWidget PageNumber = GetLayoutRoot().FindAnyWidget("PageNumber");
+		TextWidget PageNumber = TextWidget.Cast(GetLayoutRoot().FindAnyWidget("PageNumber"));
 		PageNumber.SetText("Page: " +  GetCurrentPage() + "/" + GetPages());	
 	}
 	

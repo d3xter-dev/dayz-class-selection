@@ -3,8 +3,13 @@ class ClassSelectionUtils {
 	static const string cfgMainDir = "ClassSelection\\";
 	static const string cfgClasses = "ClassSelection\\Classes\\";
 	static const string cfgPlayerSaves = "ClassSelection\\PlayerSaves\\";
-	static const string version = "v0.2";
+	static const string version = "v0.3";
 	ref JsonConfig config;
+	
+	ref map<string, ref TStringArray> GetWhiteList() {
+		RefreshConfig();
+		return config.whiteList;
+	}
 	
 	void RefreshConfig() {
 		JsonFileLoader<JsonConfig>.JsonLoadFile(cfgPath + "ClassSelection\\Config.json", config);
@@ -85,7 +90,7 @@ class ClassSelectionUtils {
 		ref JsonConfig example = new JsonConfig();
 		example.version = version;
 		example.whiteList = new map<string, ref TStringArray>;
-		example.whiteList["SomeClassName"] = {"prVg6bTfNJr0KJXDSeKbUZzz0fTGvp6FiYZflq1eqFM="};
+		example.whiteList["Admin"] = {"76561198160761279"};
 		example.keyToOpen = "KC_COMMA";
 
 		JsonFileLoader<ref JsonConfig>.JsonSaveFile(cfgPath + cfgMainDir + "Config.json", example);
@@ -118,6 +123,9 @@ class ClassSelectionUtils {
 		};
 		example.utilities = {
 			 new JsonClassItem("LandMineTrap")
+		};
+		example.generalItems = {
+			 new JsonClassItem("FirstAidKit", 0, null, {new JsonClassItem("SalineBagIV"), new JsonClassItem("Epinephrine")})
 		};
 		
 		JsonClassClothing clothing  = new JsonClassClothing();

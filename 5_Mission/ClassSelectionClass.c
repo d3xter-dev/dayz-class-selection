@@ -107,10 +107,11 @@ class ClassSelectionClass {
 	}
 	
 	bool PlayerCanAccessClass(string className, PlayerIdentity identity) {
-		foreach(string name, ref TStringArray players: Utils.config.whiteList) {
+		ref map<string, ref TStringArray> whiteList = Utils.GetWhiteList();
+		foreach(string name, ref TStringArray players: whiteList) {
 			if(name == className) {
-				players = Utils.config.whiteList.Get(name);
-				if(players.Find(identity.GetId()) > -1) {
+				players = whiteList.Get(name);
+				if(players.Find(identity.GetPlainId()) > -1) {
 					return true;
 				}
 				
@@ -179,7 +180,6 @@ class ClassSelectionClass {
 		GetGame().ObjectDelete(player.GetHumanInventory().GetEntityInHands());
 		player.RemoveAllItems();
 		
-		//ToDo Rework
 		player.GetInventory().CreateInInventory(classData.top);
 		player.GetInventory().CreateInInventory(classData.pants);
 		player.GetInventory().CreateInInventory(classData.shoes);
@@ -188,10 +188,10 @@ class ClassSelectionClass {
 		player.GetInventory().CreateInInventory(classData.mask);
 		player.GetInventory().CreateInInventory(classData.armband);
 		player.GetInventory().CreateInInventory(classData.hat);
-		player.GetInventory().CreateInInventory(classData.belt);
 		
 		ItemBase vest = ItemBase.Cast(player.GetInventory().CreateInInventory(classData.vest));
 		ItemBase backpack = ItemBase.Cast(player.GetInventory().CreateInInventory(classData.backpack));
+		ItemBase belt = ItemBase.Cast(player.GetInventory().CreateInInventory(classData.belt));
 		
 		foreach(string vestAttachment: classData.vestAttachments) {
 			vest.GetInventory().CreateAttachment(vestAttachment);
@@ -200,9 +200,13 @@ class ClassSelectionClass {
 		foreach(string backpackAttachment: classData.backpackAttachments) {
 			backpack.GetInventory().CreateAttachment(backpackAttachment);
 		}
+		
+		foreach(string beltAttachment: classData.beltAttachments) {
+			belt.GetInventory().CreateAttachment(beltAttachment);
+		}
 	}
 	
-	ItemBase SpawnItem(ClassItem item, PlayerBase player, bool InHands = false, bool SkipQuantity = false) {
+	ItemBase SpawnItem(ClassItem item, PlayerBase player, bool InHands = false, bool SkipQuantity = false, ItemBase container = null) {
 		if(item) {
 			ItemBase ent_Item;
 			TStringArray mags = item.GetMagazines();
@@ -211,6 +215,9 @@ class ClassSelectionClass {
 			if(InHands) {
 				 ent_Item = ItemBase.Cast(player.GetHumanInventory().CreateInHands(item.GetItem().GetType()));
 			} 
+			else if(container) {
+				ent_Item = ItemBase.Cast(container.GetInventory().CreateInInventory(item.GetItem().GetType()));
+			}
 			else {
 				EntityAI shoes =  player.GetInventory().FindAttachment(InventorySlots.GetSlotIdFromString("Feet"));
 				if(shoes && !ent_Item) {
@@ -301,25 +308,32 @@ class ClassSelectionClass {
 					}
 				}
 				
-				
+				//Add attachments
 				TStringArray attachments =  item.GetAttachments();
 				foreach(string attachment: attachments) {
 					EntityAI addedAttachment = ent_Item.GetInventory().CreateAttachment(attachment);
 					if(addedAttachment) addedAttachment.GetInventory().CreateAttachment("Battery9V");
 				}
 				
+				//If items have quantity add as much
 				if(!SkipQuantity && item.GetQuantity() > 0) {
 					if(ent_Item.CanBeSplit()) {
 						ent_Item.SetQuantity(item.GetQuantity());
 					}
 					else {
 						for(int q = 0; q < item.GetQuantity() - 1; q++) {
-							SpawnItem(item, player, false, true);
+							SpawnItem(item, player, false, true, container);
 						}
 					}
 				}	
 				
-				//ToDo: Cargo
+				//Add cargo
+				if(ent_Item.CanDisplayCargo() && item.GetCargo().Count()) {
+					ref array<ref ClassItem> cargo = item.GetCargo();
+					foreach(ClassItem cargoItem: cargo) {
+						SpawnItem(cargoItem, player, false, false, ent_Item);
+					} 
+				}
 				
 				if(ent_Item.IsFood()) {
 					return Edible_Base.Cast(ent_Item);
@@ -393,17 +407,23 @@ class ClassSelectionClass {
 					}
 				}
 				
-				if(foundClass && foundPrimary) {
+				if(foundClass) {
 					SetClothes(foundClass.clothes.GetRandomElement(), player);
 					player.SetQuickBarEntityShortcut(SpawnItem(foundPrimary, player, true), 0);
 					player.SetQuickBarEntityShortcut(SpawnItem(foundSecondary, player), 1);
 					player.SetQuickBarEntityShortcut(SpawnItem(foundUtility, player), 2);
+					
+					foreach(JsonClassItem classGeneralItem: foundClass.generalItems) {
+						SpawnItem(ClassItem.LoadFromJSON(classGeneralItem), player);
+					}
 				}			
 			}
 			
 			foreach(JsonClassItem generalItem: m_GerneralItems) {
 				SpawnItem(ClassItem.LoadFromJSON(generalItem), player);
 			}
+			
+			SendSyncAvailableClasses(player.GetIdentity());
 		}
 	}
 }

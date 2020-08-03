@@ -49,7 +49,6 @@ class ClassClothing {
 			
 		obj = GetGame().CreateObject(clothing.armband, Vector(0, 0, 0), true);
 		this.m_armband = EntityAI.Cast(Entity.Cast(obj));
-		
 	}
 	
 	EntityAI GetTop() {
