@@ -1,0 +1,11 @@
+{
+    "version": "v0.3",
+    "keyToOpen": "KC_COMMA",
+    "giveWeaponsAfterDeath": 1,
+    "showClassSelectOnRespawnOnly": 0,
+    "whiteList": {
+        "Admin": [
+            "76561198160761279"
+        ]
+    }
+}
