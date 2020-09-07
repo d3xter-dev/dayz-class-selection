@@ -4,13 +4,15 @@ class ClassSelectionClass {
 	ref array<ref JsonClassData> m_AvailableClasses;
 	ref array<ref JsonClassItem> m_GerneralItems;
 	ref map<string, ref array<ref JsonClassSelection>> m_PlayerClasses;
+	ref array<string> m_PlayersToRespawn;
 	
 	void ClassSelectionClass() {
 		if(GetGame().IsServer()){
 			m_PlayerClasses = new map<string, ref array<ref JsonClassSelection>>;
+			m_PlayersToRespawn = new array<string>;
 			
 			GetRPCManager().AddRPC("ClassSelection", "RequestSyncAvailableClasses", this);
-			GetRPCManager().AddRPC("ClassSelection", "RequestKeyToOpen", this);
+			GetRPCManager().AddRPC("ClassSelection", "RequestConfig", this);
 			GetRPCManager().AddRPC("ClassSelection", "SetPlayerClass", this);
 		
 			Utils.CreateDefaultFiles();
@@ -33,10 +35,16 @@ class ClassSelectionClass {
 		}
 	}
 	
-	void RequestKeyToOpen(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {
+	void RequestConfig(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {
 		if( type == CallType.Server )
 	    {
-			GetRPCManager().SendRPC("ClassSelection", "SyncKeyToOpen", new Param1<int>(Utils.StringToKeyCode(Utils.config.keyToOpen)), true, sender);
+			ref JsonConfig clientConfig = new JsonConfig();
+			clientConfig.keyToOpen = Utils.config.keyToOpen;
+			clientConfig.giveWeaponsAfterDeath = Utils.config.giveWeaponsAfterDeath;
+			clientConfig.showClassSelectOnRespawnOnly = Utils.config.showClassSelectOnRespawnOnly;
+			clientConfig.version = Utils.config.version;
+			
+			GetRPCManager().SendRPC("ClassSelection", "SyncConfig", new Param1<ref JsonConfig>(clientConfig), true, sender);
 		}
 	}
 	
@@ -129,6 +137,7 @@ class ClassSelectionClass {
 	    if( type == CallType.Server )
 	    {
 			PlayerBase player = Utils.GetPlayerById(sender.GetPlayerId());
+			bool PlayerHasClasses = false;
 			
 			//Update Players Custom Classes
 			ref JsonClassSelection selectedClass = params.param1;
@@ -142,9 +151,10 @@ class ClassSelectionClass {
 				if(m_PlayerClasses.Contains(sender.GetId())) {
 					ref array<ref JsonClassSelection> playerClasses = m_PlayerClasses.Get(sender.GetId());
 					
-					
 					bool exists = false;
 					foreach(int classIndex, JsonClassSelection playerClass: playerClasses) {
+						PlayerHasClasses = true;
+						
 						if(playerClass) {
 							playerClass.selected = false;
 							playerClasses.Remove(classIndex);
@@ -170,7 +180,9 @@ class ClassSelectionClass {
 			Utils.SavePlayerClasses(m_PlayerClasses.Get(sender.GetId()), sender.GetId());
 			
 			//Force Respawn
-			player.SetHealth(0);
+			if(!Utils.config.giveWeaponsAfterDeath || !PlayerHasClasses) {
+				player.SetHealth(0);
+			}
 	    }
 	}
 	
@@ -193,16 +205,22 @@ class ClassSelectionClass {
 		ItemBase backpack = ItemBase.Cast(player.GetInventory().CreateInInventory(classData.backpack));
 		ItemBase belt = ItemBase.Cast(player.GetInventory().CreateInInventory(classData.belt));
 		
-		foreach(string vestAttachment: classData.vestAttachments) {
-			vest.GetInventory().CreateAttachment(vestAttachment);
+		if(vest) {
+			foreach(string vestAttachment: classData.vestAttachments) {
+				vest.GetInventory().CreateAttachment(vestAttachment);
+			}
+		}
+
+		if(backpack) {
+			foreach(string backpackAttachment: classData.backpackAttachments) {
+				backpack.GetInventory().CreateAttachment(backpackAttachment);
+			}
 		}
 		
-		foreach(string backpackAttachment: classData.backpackAttachments) {
-			backpack.GetInventory().CreateAttachment(backpackAttachment);
-		}
-		
-		foreach(string beltAttachment: classData.beltAttachments) {
-			belt.GetInventory().CreateAttachment(beltAttachment);
+		if(belt) {
+			foreach(string beltAttachment: classData.beltAttachments) {
+				belt.GetInventory().CreateAttachment(beltAttachment);
+			}
 		}
 	}
 	
@@ -380,7 +398,17 @@ class ClassSelectionClass {
 			playerClasses  = m_PlayerClasses.Get(player.GetIdentity().GetId());
 		}
 		
-		if (playerClasses)
+		bool giveItemsToPlayer =  true;
+		
+		if(playerClasses && Utils.config.showClassSelectOnRespawnOnly) {
+			if(m_PlayersToRespawn.Find(player.GetIdentity().GetId()) == -1) {
+				giveItemsToPlayer = false;
+				m_PlayerClasses.Remove(player.GetIdentity().GetId());
+				m_PlayersToRespawn.Insert(player.GetIdentity().GetId());
+			}
+		}
+		
+		if (playerClasses && giveItemsToPlayer)
 		{
 			ref JsonClassSelection selectedClass = null;
 			
@@ -388,7 +416,7 @@ class ClassSelectionClass {
 				if(playerClass.selected) selectedClass = playerClass;
 			}
 			
-			if(!selectedClass) selectedClass = playerClasses.Get(0);
+			if(!selectedClass && !Utils.config.showClassSelectOnRespawnOnly) selectedClass = playerClasses.Get(0);
 			
 			if(selectedClass && PlayerCanAccessClass(selectedClass.className, player.GetIdentity())) {
 				//Check if Class has Weapons and attachments available
@@ -423,7 +451,9 @@ class ClassSelectionClass {
 				SpawnItem(ClassItem.LoadFromJSON(generalItem), player);
 			}
 			
-			SendSyncAvailableClasses(player.GetIdentity());
+			m_PlayersToRespawn.RemoveItem(player.GetIdentity().GetId());
 		}
+		
+		SendSyncAvailableClasses(player.GetIdentity());
 	}
 }

@@ -2,6 +2,7 @@ class ClassMenu extends UIScriptedMenu {
 
 	private ref Widget m_currentClass;
 	private ref array<ref JsonClassData> m_AvailableClasses;
+	private ref JsonConfig m_Config;
 	private ref array<ref Widget> m_DrawnWigets;
 	private int m_currentClassIndex = 1;
 	private int m_classesToShow = 3;
@@ -10,11 +11,20 @@ class ClassMenu extends UIScriptedMenu {
 	
 	void ClassMenu(){
 		m_AvailableClasses = new ref array<ref JsonClassData>;
+		m_Config = new ref JsonConfig;
 		m_DrawnWigets = new ref array<ref Widget>;
 	}
 	
 	void SetAvailableClasses(ref array<ref JsonClassData> classes){
 		m_AvailableClasses = classes;
+	}
+	
+	void SetConfig(ref JsonConfig config){
+		m_Config = config;
+	}
+	
+	void SetSelectedClass(bool selected) {
+		selectedClass = selected;
 	}
 	
 	override Widget Init() {
@@ -178,6 +188,11 @@ class ClassMenu extends UIScriptedMenu {
 			ClassData data;
 			m_currentClass.GetScript(data);
 			GetRPCManager().SendRPC("ClassSelection", "SetPlayerClass", new Param1<ref JsonClassSelection>(data.GetSelection()));	
+			
+			if(m_Config.giveWeaponsAfterDeath && selectedClass) {
+				GetGame().GetUIManager().ShowDialog("Success!", "You will receive new Gear after Death!", 0, DBT_OK, DBB_YES, DMT_INFO, this);
+			}
+			
 			selectedClass = true;
 			Hide();
 		}

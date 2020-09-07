@@ -19,13 +19,23 @@ class ClassSelectionUtils {
 		RefreshConfig();
 		
 		if(config) {
+			string error = "";
 			if(config.version != version) {
-				string error = "The Class-Selection mod had some important changes, check the workshop, fix your JSON files and set the version in the Config.json to " + version;
+				error = "The Class-Selection mod had some important changes, check the workshop, fix your JSON files and set the version in the Config.json to " + version;
 				Print(error); 
 				Debug.LogError(error);
 				Error(error);
 				GetGame().RequestExit(IDC_MAIN_QUIT);
 			}
+			
+			/*
+			if(config.showClassSelectOnRespawn &&  config.giveWeaponsAfterDeath) {
+				error = "The Class-Selection mod doesn't support showClassSelectOnRespawn and giveWeaponsAfterDeath on the same time, decide what to use and change the config!";
+				Print(error); 
+				Debug.LogError(error);
+				Error(error);
+				GetGame().RequestExit(IDC_MAIN_QUIT);
+			}*/
 		}
 		else {
 			config = SaveConfigExample();

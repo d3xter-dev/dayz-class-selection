@@ -2,19 +2,19 @@ modded class MissionGameplay {
 	
 	ref ClassMenu m_ClassMenu;
 	ref array<ref JsonClassData> m_AvailableClasses;
-	int m_KeyToOpen = KeyCode.KC_COMMA;
+	ref JsonConfig m_Config;
 
 	void MissionGameplay()
 	{
-		GetRPCManager().SendRPC("ClassSelection", "RequestKeyToOpen", null, true);
+		GetRPCManager().SendRPC("ClassSelection", "RequestConfig", null, true);
 		GetRPCManager().AddRPC("ClassSelection", "SyncAvailableClasses", this, SingeplayerExecutionType.Client);
-		GetRPCManager().AddRPC("ClassSelection", "SyncKeyToOpen", this, SingeplayerExecutionType.Client);
+		GetRPCManager().AddRPC("ClassSelection", "SyncConfig", this, SingeplayerExecutionType.Client);
 	}
 	
 	override void OnKeyPress( int key ) { 
 		switch ( key ) {
-			case m_KeyToOpen:
-				GetClassMenu().Toggle();
+			case ClassSelectionUtils.StringToKeyCode(m_Config.keyToOpen):
+				if(!m_Config.showClassSelectOnRespawnOnly) GetClassMenu().Toggle();
 			break;
 			default:
 		}
@@ -44,22 +44,23 @@ modded class MissionGameplay {
 	    {
 	        Print( "ClassSelection - Sync Classes!" );
 	        m_AvailableClasses = classes.param1;
+			GetClassMenu();
 	    }
 	}
 	
-	void SyncKeyToOpen(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
+	void SyncConfig(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
 	{
-	    Param1<int> KeyToOpen;
-	    if ( !ctx.Read( KeyToOpen ) ) return;
+	    Param1<ref JsonConfig> config;
+	    if ( !ctx.Read( config ) ) return;
 		
 	    if( type == CallType.Client )
 	    {
-	        Print( "ClassSelection - Sync Key!" );
-	        m_KeyToOpen = KeyToOpen.param1;
+	        Print( "ClassSelection - Sync Config!" );
+	        m_Config = config.param1;
 	    }
 	}
 	
-	bool HasSelectedClass() {
+	bool HasSelectedClass(bool returnAvailable = false) {
 		if(m_AvailableClasses) {
 			foreach(ref JsonClassData classData: m_AvailableClasses) {
 				if(classData.selected) {
@@ -67,6 +68,7 @@ modded class MissionGameplay {
 				}
 			}
 		}
+		if(returnAvailable) return false;
 		
 		return GetClassMenu().selectedClass;
 	}
@@ -78,7 +80,9 @@ modded class MissionGameplay {
 		}
 		
 		m_ClassMenu.SetAvailableClasses(m_AvailableClasses);
-
+		m_ClassMenu.SetConfig(m_Config);
+		m_ClassMenu.SetSelectedClass(HasSelectedClass(true));
+		
 		return m_ClassMenu;
 	}
 }
