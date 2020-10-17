@@ -11,7 +11,9 @@ modded class MissionGameplay {
 		GetRPCManager().AddRPC("ClassSelection", "SyncConfig", this, SingeplayerExecutionType.Client);
 	}
 	
-	override void OnKeyPress( int key ) { 
+	override void OnKeyPress( int key ) {
+		super.OnKeyPress(key);
+	
 		switch ( key ) {
 			case ClassSelectionUtils.StringToKeyCode(m_Config.keyToOpen):
 				if(!m_Config.showClassSelectOnRespawnOnly) GetClassMenu().Toggle();
