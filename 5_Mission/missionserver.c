@@ -50,8 +50,21 @@ modded class MissionServer
 		}
 	}
 	
-	override void EquipCharacter()
+	override void EquipCharacter(MenuDefaultCharacterData char_data)
 	{	
-		GetClassSelection().GiveClassEquipment(m_player);
+		super.EquipCharacter(char_data);
+		
+		if(GetClassSelection().Utils.config.overrideEquipCharacter) {
+			GetClassSelection().GiveClassEquipment(m_player);
+		}
+	}
+	
+	override void StartingEquipSetup(PlayerBase player, bool clothesChosen)
+	{
+		super.StartingEquipSetup(player, clothesChosen);
+		
+		if(GetClassSelection().Utils.config.overrideStartingEquipSetup) {
+			 GetClassSelection().GiveClassEquipment(m_player);
+		}
 	}
 };

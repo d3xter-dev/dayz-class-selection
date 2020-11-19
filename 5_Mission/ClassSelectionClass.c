@@ -231,6 +231,7 @@ class ClassSelectionClass {
 			EntityAI vest =  player.GetInventory().FindAttachment(InventorySlots.GetSlotIdFromString("Vest"));
 			
 			if(InHands) {
+				 GetGame().ObjectDelete(player.GetHumanInventory().GetEntityInHands());
 				 ent_Item = ItemBase.Cast(player.GetHumanInventory().CreateInHands(item.GetItem().GetType()));
 			} 
 			else if(container) {
