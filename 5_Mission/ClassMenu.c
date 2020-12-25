@@ -190,7 +190,7 @@ class ClassMenu extends UIScriptedMenu {
 			GetRPCManager().SendRPC("ClassSelection", "SetPlayerClass", new Param1<ref JsonClassSelection>(data.GetSelection()));	
 			
 			if(m_Config.giveWeaponsAfterDeath && selectedClass) {
-				GetGame().GetUIManager().ShowDialog("Success!", "You will receive new Gear after Death!", 0, DBT_OK, DBB_YES, DMT_INFO, this);
+				GetGame().GetUIManager().ShowDialog("Success!", "You will receive new gear next time you die.", 0, DBT_OK, DBB_YES, DMT_INFO, this);
 			}
 			
 			selectedClass = true;

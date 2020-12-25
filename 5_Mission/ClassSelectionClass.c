@@ -302,21 +302,9 @@ class ClassSelectionClass {
 									weaponBase.PushCartridgeToChamber(i, ammo_damage, ammo_type);
 									has_bullet = true;
 								}
-									
-								if(weaponBase.IsInherited(Repeater_Base)) {
-									animationIndex = 2;
-								}
-								
-								if (weaponBase.IsInherited(BoltActionRifle_InnerMagazine_Base) || weaponBase.IsInherited(DoubleBarrel_Base) || weaponBase.IsInherited(Repeater_Base)) {
-									has_bullet = false;
-								}
 							}
 						}
-						
-						if(weaponBase.IsInherited(CZ527_Base) || weaponBase.IsInherited(BoltActionRifle_InnerMagazine_Base)) {
-							animationIndex = 1;
-						}
-						
+					
 						weaponBase.UpdateAnimationState(has_bullet, has_mag, animationIndex);
 				
 						if(GetGame().IsMultiplayer())
